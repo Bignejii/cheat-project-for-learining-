@@ -1,0 +1,104 @@
+#include "HealthPotion.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Engine/Localization/ConstantString.h"
+#include "Engine/Localization/LocalizedString.h"
+#include "Engine/Sound/Sound.h"
+#include "Entities/Platformer/PlatformerEntity.h"
+#include "Scenes/Platformer/Components/Entities/Stats/EntityHealthBehavior.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Platformer/Inventory/Items/Consumables/Health/HealthPotion/ThrowHealthPotion.h"
+#include "Scenes/Platformer/State/StateKeys.h"
+
+#include "Resources/ItemResources.h"
+#include "Resources/SoundResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string HealthPotion::SaveKey = "health-potion";
+const float HealthPotion::HealPercentage = 0.6f;
+
+HealthPotion* HealthPotion::create()
+{
+	HealthPotion* instance = new HealthPotion();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+HealthPotion::HealthPotion() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 14 }}), ItemMeta(20, RubberBanding(3, 0.15f)), true)
+{
+	this->outOfCombatSound = Sound::create(SoundResources::Platformer_FX_Potions_PotionDrink2);
+
+	this->outOfCombatSound->toggleIgnorePause(true);
+
+	this->addChild(this->outOfCombatSound);
+}
+
+HealthPotion::~HealthPotion()
+{
+}
+
+void HealthPotion::useOutOfCombat(PlatformerEntity* target)
+{
+	target->getComponent<EntityHealthBehavior>([=](EntityHealthBehavior* healthBehavior)
+	{
+		healthBehavior->setHealth(healthBehavior->getHealth() + int(float(healthBehavior->getMaxHealth()) * HealthPotion::HealPercentage));
+	});
+
+	this->outOfCombatSound->play();
+}
+
+bool HealthPotion::canUseOnTarget(PlatformerEntity* target)
+{
+	if (!target->getRuntimeStateOrDefaultBool(StateKeys::IsAlive, true))
+	{
+		return false;
+	}
+	
+	bool canUse = true;
+
+	target->getComponent<EntityHealthBehavior>([&](EntityHealthBehavior* healthBehavior)
+	{
+		if (healthBehavior->getHealth() == healthBehavior->getMaxHealth())
+		{
+			canUse = false;
+		}
+	});
+	
+	return canUse;
+}
+
+LocalizedString* HealthPotion::getDescription()
+{
+	return Strings::Items_Consumables_Health_HealthPotionDescription::create()
+		->setStringReplacementVariables(ConstantString::create(std::to_string(int(HealthPotion::HealPercentage * 100.0f))));
+}
+
+Item* HealthPotion::clone()
+{
+	return HealthPotion::create();
+}
+
+LocalizedString* HealthPotion::getString()
+{
+	return Strings::Items_Consumables_Health_HealthPotion::create();
+}
+
+const std::string& HealthPotion::getIconResource()
+{
+	return ItemResources::Consumables_Potions_HealthPotion;
+}
+
+const std::string& HealthPotion::getIdentifier()
+{
+	return HealthPotion::SaveKey;
+}
+
+PlatformerAttack* HealthPotion::createAssociatedAttack()
+{
+	return ThrowHealthPotion::create(PlatformerAttack::Priority::Common);
+}

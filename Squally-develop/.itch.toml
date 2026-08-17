@@ -1,0 +1,22 @@
+[[prereqs]]
+name = "vcredist-2010-x86"
+platform = "windows"
+
+[[prereqs]]
+name = "vcredist-2010-x64"
+platform = "osx"
+
+[[actions]]
+name = "play"
+path = "Launcher.exe"
+platform = "windows"
+
+[[actions]]
+name = "play"
+path = "Contents/MacOS/Launcher"
+platform = "osx"
+
+[[actions]]
+name = "play"
+path = "Squally"
+platform = "linux"

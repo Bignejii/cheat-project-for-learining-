@@ -1,0 +1,79 @@
+#include "WoodenSword.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Platformer/Inventory/Items/Recipes/Weapons/Swords/WoodenSwordPlans.h"
+
+#include "Resources/ItemResources.h"
+#include "Resources/SoundResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string WoodenSword::SaveKey = "wooden-sword";
+
+WoodenSword* WoodenSword::create()
+{
+	WoodenSword* instance = new WoodenSword();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+WoodenSword::WoodenSword() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 9 }}), SWORD_DAMAGE_MIN(1), SWORD_DAMAGE_MAX(1), ItemStats(
+	// Health
+	1,
+	// Mana
+	0,
+	// Attack
+	0,
+	// Magic Attack
+	0,
+	// Armor
+	0,
+	// Speed
+	0.15f
+))
+{
+}
+
+WoodenSword::~WoodenSword()
+{
+}
+
+Vec2 WoodenSword::getWeaponCollisionOffset()
+{
+	return Vec2(0.0f, 98.0f);
+}
+
+std::string WoodenSword::getWeaponImpactSound()
+{
+	return SoundResources::Platformer_Physical_Impact_HitWood1;
+}
+
+Item* WoodenSword::clone()
+{
+	return WoodenSword::create();
+}
+
+LocalizedString* WoodenSword::getString()
+{
+	return Strings::Items_Equipment_Weapons_Swords_WoodenSword::create();
+}
+
+const std::string& WoodenSword::getIconResource()
+{
+	return ItemResources::Equipment_Weapons_Swords_WoodenSword;
+}
+
+const std::string& WoodenSword::getIdentifier()
+{
+	return WoodenSword::SaveKey;
+}
+
+Recipe* WoodenSword::getRecipe()
+{
+	return WoodenSwordPlans::create();
+}

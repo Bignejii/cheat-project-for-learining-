@@ -1,0 +1,40 @@
+#pragma once
+
+#include "Engine/Quests/QuestTask.h"
+
+class Ajax;
+class Guano;
+class QuestLine;
+class Scrappy;
+class Squally;
+
+class RaiseBridge : public QuestTask
+{
+public:
+	static RaiseBridge* create(GameObject* owner, QuestLine* questLine);
+
+	static const std::string MapKeyQuest;
+
+protected:
+	RaiseBridge(GameObject* owner, QuestLine* questLine);
+	virtual ~RaiseBridge();
+
+	void onLoad(QuestState questState) override;
+	void onActivate(bool isActiveThroughSkippable, bool isInitialActivation) override;
+	void onComplete() override;
+	void onSkipped() override;
+
+private:
+	typedef QuestTask super;
+
+	void runCinematicSequence();
+	void runCinematicSequenceCureIncomplete();
+	void runCinematicSequencePreviousQuestIncomplete();
+
+	Ajax* ajax = nullptr;
+	Guano* guano = nullptr;
+	Scrappy* scrappy = nullptr;
+	Squally* squally = nullptr;
+
+	static const std::string TagTownCinematic;
+};

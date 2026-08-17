@@ -1,0 +1,42 @@
+#pragma once
+
+#include "Objects/Platformer/Interactables/InteractObject.h"
+
+namespace cocos2d
+{
+	class Sprite;
+}
+
+class SmartAnimationSequenceNode;
+class WorldSound;
+
+class LifeStone : public InteractObject
+{
+public:
+	static LifeStone* create(cocos2d::ValueMap& properties);
+
+	static const std::string MapKey;
+	static const std::string MapPropertyTransition;
+	
+protected:
+	LifeStone(cocos2d::ValueMap& properties);
+	virtual ~LifeStone();
+
+	void onEnter() override;
+	void onEnterTransitionDidFinish() override;
+	void initializePositions() override;
+	void initializeListeners() override;
+	void onInteract(PlatformerEntity* interactingEntity) override;
+	void onEndCollision() override;
+
+private:
+	typedef InteractObject super;
+
+	void runHealAnimation(bool reRun = false);
+
+	cocos2d::Sprite* lifeStone = nullptr;
+	SmartAnimationSequenceNode* healAnimation = nullptr;
+	WorldSound* healSound = nullptr;
+	bool isAnimating = false;
+	std::string spawnKey;
+};

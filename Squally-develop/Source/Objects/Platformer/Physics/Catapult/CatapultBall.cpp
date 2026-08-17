@@ -1,0 +1,87 @@
+#include "CatapultBall.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCActionEase.h"
+#include "2d/CCSprite.h"
+#include "base/CCValue.h"
+
+#include "Engine/Localization/LocalizedString.h"
+#include "Engine/Hackables/HackableCode.h"
+#include "Engine/Physics/CollisionObject.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Engine/Utils/MathUtils.h"
+
+#include "Scenes/Platformer/Level/Physics/PlatformerPhysicsTypes.h"
+
+#include "Resources/ObjectResources.h"
+#include "Resources/UIResources.h"
+
+using namespace cocos2d;
+
+const std::string CatapultBall::MapKeyCatapultBall = "catapult-ball";
+
+CatapultBall* CatapultBall::create(const ValueMap& properties, Vec2 velocity)
+{
+	CatapultBall* instance = new CatapultBall(properties, velocity);
+	
+	instance->autorelease();
+
+	return instance;
+}
+
+CatapultBall::CatapultBall(const ValueMap& properties, Vec2 velocity) : super(properties)
+{
+	this->ball = Sprite::create(ObjectResources::Traps_Catapult_BALL);
+	this->ballCollision = CollisionObject::create(CollisionObject::createCircle(48.0f), (CollisionType)PlatformerCollisionType::Physics, CollisionObject::Properties(true, true));
+	this->velocity = velocity;
+
+	this->ballCollision->whenCollidesWith({ (int)PlatformerCollisionType::Physics, (int)PlatformerCollisionType::Solid, (int)PlatformerCollisionType::Player, (int)PlatformerCollisionType::Force }, [=](CollisionData collisionData)
+	{
+		this->isAccelerating = false;
+
+		return CollisionResult::CollideWithPhysics;
+	});
+
+	this->ballCollision->setHorizontalDampening(1.0f);
+	//this->ballCollision->setVelocity(this->velocity);
+
+	this->ballCollision->addChild(this->ball);
+	this->addChild(this->ballCollision);
+}
+
+CatapultBall::~CatapultBall()
+{
+}
+
+void CatapultBall::onEnter()
+{
+	super::onEnter();
+
+	this->scheduleUpdate();
+}
+
+void CatapultBall::initializePositions()
+{
+	super::initializePositions();
+}
+
+void CatapultBall::update(float dt)
+{
+	super::update(dt);
+
+	if (this->isAccelerating)
+	{
+		this->ballCollision->setPosition(this->ballCollision->getPosition() + this->velocity * dt);
+	}
+}
+
+Vec2 CatapultBall::getButtonOffset()
+{
+	return Vec2(0.0f, 0.0f);
+}
+
+void CatapultBall::registerHackables()
+{
+	super::registerHackables();
+}

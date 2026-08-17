@@ -1,0 +1,245 @@
+#include "TalkToSarude.h"
+
+#include "2d/CCActionEase.h"
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+#include "base/CCValue.h"
+
+#include "Engine/Animations/SmartAnimationNode.h"
+#include "Engine/Events/ObjectEvents.h"
+#include "Engine/Events/QuestEvents.h"
+#include "Entities/Platformer/Npcs/Mages/Sarude.h"
+#include "Entities/Platformer/Squally/Squally.h"
+#include "Events/DialogueEvents.h"
+#include "Events/PlatformerEvents.h"
+#include "Objects/Platformer/Interactables/Doors/MagePortals/MagePortal.h"
+#include "Scenes/Platformer/Components/Entities/Dialogue/EntityDialogueBehavior.h"
+#include "Scenes/Platformer/Components/Entities/Visual/EntityQuestVisualBehavior.h"
+#include "Scenes/Platformer/Dialogue/DialogueSet.h"
+#include "Scenes/Platformer/Dialogue/Voices.h"
+#include "Scenes/Platformer/Objectives/ObjectiveKeys.h"
+#include "Scenes/Platformer/Objectives/Objectives.h"
+
+#include "Resources/SoundResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string TalkToSarude::MapKeyQuest = "talk-to-sarude";
+const std::string TalkToSarude::QuestPortalTag = "quest-portal";
+
+TalkToSarude* TalkToSarude::create(GameObject* owner, QuestLine* questLine)
+{
+	TalkToSarude* instance = new TalkToSarude(owner, questLine);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+TalkToSarude::TalkToSarude(GameObject* owner, QuestLine* questLine) : super(owner, questLine, TalkToSarude::MapKeyQuest, false)
+{
+}
+
+TalkToSarude::~TalkToSarude()
+{
+}
+
+void TalkToSarude::onLoad(QuestState questState)
+{
+	ObjectEvents::WatchForObject<Sarude>(this, [=](Sarude* sarude)
+	{
+		this->sarude = sarude;
+
+		if (questState == QuestState::Active || questState == QuestState::ActiveThroughSkippable)
+		{
+			this->sarude->getComponent<EntityQuestVisualBehavior>([=](EntityQuestVisualBehavior* questBehavior)
+			{
+				questBehavior->enableNewQuest();
+			});
+		}
+	}, Sarude::MapKey);
+
+	ObjectEvents::WatchForObject<Squally>(this, [=](Squally* squally)
+	{
+		this->squally = squally;
+	}, Squally::MapKey);
+
+	ObjectEvents::WatchForObject<MagePortal>(this, [=](MagePortal* portal)
+	{
+		this->portal = portal;
+
+		if (questState == QuestState::Active || questState == QuestState::ActiveThroughSkippable)
+		{
+			this->portal->closePortal(true);
+		}
+
+	}, TalkToSarude::QuestPortalTag);
+}
+
+void TalkToSarude::onActivate(bool isActiveThroughSkippable, bool isInitialActivation)
+{
+	this->registerDialogue();
+}
+
+void TalkToSarude::onComplete()
+{
+	if (this->portal != nullptr)
+	{
+		this->portal->openPortal(true);
+	}
+
+	if (this->sarude != nullptr)
+	{
+		this->sarude->getComponent<EntityQuestVisualBehavior>([=](EntityQuestVisualBehavior* questBehavior)
+		{
+			questBehavior->disableAll();
+		});
+	}
+
+	Objectives::SetCurrentObjective(ObjectiveKeys::EFBeatGauntlet);
+}
+
+void TalkToSarude::onSkipped()
+{
+	this->removeAllListeners();
+}
+
+void TalkToSarude::registerDialogue()
+{
+	this->sarude->watchForComponent<EntityDialogueBehavior>([=](EntityDialogueBehavior* interactionBehavior)
+	{
+		// Pre-text chain
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_A_CallForHelp::create(),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+			},
+			Voices::GetNextVoiceMedium(),
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Ellipses::create(),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Left,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true),
+				true
+			),
+			[=]()
+			{
+			},
+			"",
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_B_DoYouRemember::create(),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+			},
+			Voices::GetNextVoiceMedium(),
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_D_OnlyYou::create(),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+			},
+			Voices::GetNextVoiceLong(),
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_E_YouNeedTraining::create(),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+			},
+			Voices::GetNextVoiceMedium(),
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_F_ToBeginYouMustLearnHexus::create()->setStringReplacementVariables(Strings::Hexus_Hexus::create()),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+			},
+			Voices::GetNextVoiceMedium(),
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_G_HexusIsAGameWhere::create()->setStringReplacementVariables(Strings::Hexus_Hexus::create()),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+			},
+			Voices::GetNextVoiceMedium(),
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_H_WhoeverMastersHexus::create()->setStringReplacementVariables(Strings::Hexus_Hexus::create()),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+			},
+			Voices::GetNextVoiceMedium(),
+			false
+		));
+		interactionBehavior->enqueuePretext(DialogueEvents::DialogueOpenArgs(
+			Strings::Platformer_Quests_EndianForest_HexusGauntlet_Sarude_I_PortalToGauntlet::create()->setStringReplacementVariables(Strings::Hexus_Hexus::create()),
+			DialogueEvents::DialogueVisualArgs(
+				DialogueBox::DialogueDock::Top,
+				DialogueBox::DialogueAlignment::Right,
+				DialogueEvents::BuildPreviewNode(&this->squally, false),
+				DialogueEvents::BuildPreviewNode(&this->sarude, true)
+			),
+			[=]()
+			{
+				this->complete();
+			},
+			Voices::GetNextVoiceLong(),
+			true
+		));
+	});
+}

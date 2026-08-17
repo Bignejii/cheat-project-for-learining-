@@ -1,0 +1,33 @@
+#include "ChestPoolEFRare.h"
+
+#include "base/CCValue.h"
+
+#include "Engine/Inventory/ItemChance.h"
+#include "Scenes/Platformer/Inventory/Items/PlatformerItems.h"
+
+using namespace cocos2d;
+
+const std::string ChestPoolEFRare::PoolName = "ef-rare";
+
+ChestPoolEFRare* ChestPoolEFRare::create(ValueMap& properties)
+{
+	ChestPoolEFRare* instance = new ChestPoolEFRare(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+ChestPoolEFRare::ChestPoolEFRare(ValueMap& properties) : super(
+	properties, ChestPoolEFRare::PoolName, SampleMethod::Guarantee, 2, 3,
+	{
+	})
+{
+	this->addItemToPool(ItemChance::create(Quartz::create(), ItemChance::Probability::Common));
+	this->addItemToPool(ItemChance::create(Copper::create(), ItemChance::Probability::Guaranteed));
+	this->addItemToPool(ItemChance::create(Copper::create(), ItemChance::Probability::Guaranteed));
+}
+
+ChestPoolEFRare::~ChestPoolEFRare()
+{
+}

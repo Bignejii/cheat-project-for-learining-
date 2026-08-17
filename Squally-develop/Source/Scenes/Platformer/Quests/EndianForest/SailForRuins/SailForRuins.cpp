@@ -1,0 +1,155 @@
+#include "SailForRuins.h"
+
+#include "2d/CCActionEase.h"
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+#include "base/CCValue.h"
+
+#include "Engine/Animations/SmartAnimationNode.h"
+#include "Engine/Dialogue/DialogueOption.h"
+#include "Engine/Dialogue/SpeechBubble.h"
+#include "Engine/Events/ObjectEvents.h"
+#include "Engine/Events/QuestEvents.h"
+#include "Entities/Platformer/Npcs/Transition/Blackbeard.h"
+#include "Entities/Platformer/Squally/Squally.h"
+#include "Events/PlatformerEvents.h"
+#include "Objects/Platformer/Interactables/Doors/Portal.h"
+#include "Scenes/Platformer/Components/Entities/Dialogue/EntityDialogueBehavior.h"
+#include "Scenes/Platformer/Components/Objects/DisabledPortal.h"
+#include "Scenes/Platformer/Dialogue/DialogueSet.h"
+#include "Scenes/Platformer/Dialogue/Voices.h"
+#include "Scenes/Platformer/Objectives/ObjectiveKeys.h"
+#include "Scenes/Platformer/Objectives/Objectives.h"
+
+#include "Resources/SoundResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string SailForRuins::MapKeyQuest = "sail-for-ruins";
+const std::string SailForRuins::QuestTagShipPortal = "ship-portal";
+
+SailForRuins* SailForRuins::create(GameObject* owner, QuestLine* questLine)
+{
+	SailForRuins* instance = new SailForRuins(owner, questLine);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+SailForRuins::SailForRuins(GameObject* owner, QuestLine* questLine) : super(owner, questLine, SailForRuins::MapKeyQuest, false)
+{
+}
+
+SailForRuins::~SailForRuins()
+{
+}
+
+void SailForRuins::onLoad(QuestState questState)
+{
+	ObjectEvents::WatchForObject<Squally>(this, [=](Squally* squally)
+	{
+		this->squally = squally;
+	}, Squally::MapKey);
+
+	ObjectEvents::WatchForObject<Portal>(this, [=](Portal* portal)
+	{
+		this->portal = portal;
+
+		if (questState != QuestState::None)
+		{
+			this->portal->getComponent<DisabledPortal>([=](DisabledPortal* disabledPortal)
+			{
+				disabledPortal->enablePortal();
+			});
+
+			this->complete();
+		}
+
+	}, SailForRuins::QuestTagShipPortal);
+
+	ObjectEvents::WatchForObject<Blackbeard>(this, [=](Blackbeard* blackbeard)
+	{
+		this->blackbeard = blackbeard;
+
+		this->blackbeard->watchForComponent<EntityDialogueBehavior>([=](EntityDialogueBehavior* interactionBehavior)
+		{
+			interactionBehavior->getMainDialogueSet()->addDialogueOption(DialogueOption::create(
+				Strings::Platformer_Quests_EndianForest_SailForRuins_BlackBeard_CanWeBoard::create()
+					->setStringReplacementVariables(Strings::Platformer_MapNames_UnderflowRuins_UnderflowRuins::create()),
+				[=]()
+				{
+					switch(questState)
+					{
+						case QuestState::Active:
+						case QuestState::ActiveThroughSkippable:
+						case QuestState::Complete:
+						{
+							this->runYesSequence();
+							break;
+						}
+						case QuestState::None:
+						{
+							this->runNoSequence();
+							break;
+						}
+					}
+				}),
+				0.5f
+			);
+		});
+	}, Blackbeard::MapKey);
+}
+
+void SailForRuins::onActivate(bool isActiveThroughSkippable, bool isInitialActivation)
+{
+}
+
+void SailForRuins::onComplete()
+{
+}
+
+void SailForRuins::onSkipped()
+{
+}
+
+void SailForRuins::runNoSequence()
+{
+	DialogueEvents::TriggerOpenDialogue(DialogueEvents::DialogueOpenArgs(
+		Strings::Platformer_Quests_EndianForest_SailForRuins_BlackBeard_Nay::create(),
+		DialogueEvents::DialogueVisualArgs(
+			DialogueBox::DialogueDock::Bottom,
+			DialogueBox::DialogueAlignment::Left,
+			DialogueEvents::BuildPreviewNode(&this->blackbeard, false),
+			DialogueEvents::BuildPreviewNode(&this->squally, true)
+		),
+		[=]()
+		{
+			Objectives::SetCurrentObjective(ObjectiveKeys::EFVisitQueen);
+		},
+		Voices::GetNextVoiceMedium(),
+		true
+	));
+}
+
+void SailForRuins::runYesSequence()
+{
+	DialogueEvents::TriggerOpenDialogue(DialogueEvents::DialogueOpenArgs(
+		Strings::Platformer_Quests_EndianForest_SailForRuins_BlackBeard_Aye::create(),
+		DialogueEvents::DialogueVisualArgs(
+			DialogueBox::DialogueDock::Bottom,
+			DialogueBox::DialogueAlignment::Left,
+			DialogueEvents::BuildPreviewNode(&this->blackbeard, false),
+			DialogueEvents::BuildPreviewNode(&this->squally, true)
+		),
+		[=]()
+		{
+		},
+		Voices::GetNextVoiceMedium(),
+		true
+	));
+}

@@ -1,0 +1,73 @@
+#include "SteelBow.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Platformer/Inventory/Items/Recipes/Weapons/Bows/SteelBowPlans.h"
+
+#include "Resources/ItemResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string SteelBow::SaveKey = "steel-bow";
+
+SteelBow* SteelBow::create()
+{
+	SteelBow* instance = new SteelBow();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+SteelBow::SteelBow() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 7 }}), BOW_DAMAGE_MIN(3), BOW_DAMAGE_MAX(3), ItemStats(
+	// Health
+	1,
+	// Mana
+	3,
+	// Attack
+	0,
+	// Magic Attack
+	0,
+	// Armor
+	0,
+	// Speed
+	0.25f
+))
+{
+}
+
+SteelBow::~SteelBow()
+{
+}
+
+Item* SteelBow::clone()
+{
+	return SteelBow::create();
+}
+
+LocalizedString* SteelBow::getString()
+{
+	return Strings::Items_Equipment_Weapons_Bows_SteelBow::create();
+}
+
+const std::string& SteelBow::getIconResource()
+{
+	return ItemResources::Equipment_Weapons_Bows_SteelBow;
+}
+
+const std::string& SteelBow::getIdentifier()
+{
+	return SteelBow::SaveKey;
+}
+
+Vec2 SteelBow::getDisplayOffset()
+{
+	return Vec2(-12.0f, -68.0f);
+}
+
+Recipe* SteelBow::getRecipe()
+{
+	return SteelBowPlans::create();
+}

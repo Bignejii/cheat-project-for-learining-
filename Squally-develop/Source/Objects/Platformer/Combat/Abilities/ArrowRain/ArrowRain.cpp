@@ -1,0 +1,290 @@
+#include "ArrowRain.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCSprite.h"
+#include "base/CCEventListenerCustom.h"
+
+#include "Engine/Animations/SmartAnimationSequenceNode.h"
+#include "Engine/Events/ObjectEvents.h"
+#include "Engine/Hackables/HackableCode.h"
+#include "Engine/Localization/ConcatString.h"
+#include "Engine/Localization/ConstantString.h"
+#include "Engine/Optimization/LazyNode.h"
+#include "Engine/Physics/CollisionObject.h"
+#include "Engine/Sound/WorldSound.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Events/CombatEvents.h"
+#include "Entities/Platformer/PlatformerEntity.h"
+#include "Objects/Platformer/Combat/Abilities/ArrowRain/ArrowRainGenericPreview.h"
+#include "Scenes/Platformer/Level/Combat/Attacks/PlatformerAttack.h"
+#include "Scenes/Platformer/Level/Combat/Timeline.h"
+#include "Scenes/Platformer/Level/Combat/TimelineEntry.h"
+#include "Scenes/Platformer/Level/Combat/TimelineEvent.h"
+#include "Scenes/Platformer/Level/Combat/TimelineEventGroup.h"
+#include "Scenes/Platformer/Level/Physics/PlatformerPhysicsTypes.h"
+#include "Scenes/Platformer/Hackables/HackFlags.h"
+
+#include "Resources/ObjectResources.h"
+#include "Resources/FXResources.h"
+#include "Resources/SoundResources.h"
+#include "Resources/UIResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+#define LOCAL_FUNC_ID_COMPARE_TEAM 11
+
+const int ArrowRain::TickCount = 6;
+const int ArrowRain::Damage = 4;
+const float ArrowRain::TimeBetweenTicks = 0.75f;
+const float ArrowRain::StartDelay = 0.25f;
+const std::string ArrowRain::StateKeyIsCasterOnEnemyTeam = "ANTI_OPTIMIZE_STATE_KEY_DAMAGE_TAKEN";
+
+const std::string ArrowRain::HackIdentifierArrowRainTeamCompare = "arrow-rain-team";
+
+ArrowRain* ArrowRain::create(PlatformerEntity* caster, PlatformerEntity* target, std::string arrowResource)
+{
+	ArrowRain* instance = new ArrowRain(caster, target, arrowResource);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+ArrowRain::ArrowRain(PlatformerEntity* caster, PlatformerEntity* target, std::string arrowResource) : super(caster, target, true)
+{
+	this->impactSfxA = WorldSound::create(SoundResources::Platformer_Physical_Impact_HitCrumple1);
+	this->impactSfxB = WorldSound::create(SoundResources::Platformer_Physical_Impact_HitCrumple2);
+	this->arrowResource = arrowResource;
+
+	for (int index = 0; index < 8; index++)
+	{
+		Sprite* arrow = Sprite::create(arrowResource);
+
+		// Arrows are assumed to point up
+		arrow->setRotation(180.0f);
+		arrow->setOpacity(0);
+
+		this->arrowPool.push_back(arrow);
+		this->arrowCooldowns.push_back(float(index) * 0.4f);
+
+		this->addChild(arrow);
+	}
+
+	this->addChild(this->impactSfxA);
+	this->addChild(this->impactSfxB);
+}
+
+ArrowRain::~ArrowRain()
+{
+}
+
+void ArrowRain::onEnter()
+{
+	super::onEnter();
+
+	this->runArrowRain();
+	
+	CombatEvents::TriggerHackableCombatCue();
+}
+
+void ArrowRain::update(float dt)
+{
+	super::update(dt);
+
+	this->updateAnimation(dt);
+}
+
+Vec2 ArrowRain::getButtonOffset()
+{
+	return Vec2(0.0f, -768.0f);
+}
+
+void ArrowRain::registerHackables()
+{
+	super::registerHackables();
+
+	HackableCode::CodeInfoMap codeInfoMap =
+	{
+		{
+			LOCAL_FUNC_ID_COMPARE_TEAM,
+			HackableCode::HackableCodeInfo(
+				ArrowRain::HackIdentifierArrowRainTeamCompare,
+				Strings::Menus_Hacking_Abilities_Abilities_ArrowRain_CompareTeam::create(),
+				HackableBase::HackBarColor::Purple,
+				UIResources::Menus_Icons_ArrowRain,
+				LazyNode<HackablePreview>::create([=](){ return this->createDefaultPreview(); }),
+				{
+					{
+						HackableCode::Register::zax, Strings::Menus_Hacking_Abilities_Abilities_ArrowRain_RegisterEax::create(), HackableDataType::Int32
+					},
+				},
+				int(HackFlags::None),
+				ArrowRain::StartDelay + ArrowRain::TimeBetweenTicks * float(ArrowRain::TickCount),
+				0.0f,
+				{
+					HackableCode::ReadOnlyScript(
+							Strings::Menus_Hacking_CodeEditor_OriginalCode::create(),
+						// x86
+						ConcatString::create({
+							COMMENT(Strings::Menus_Hacking_Abilities_Abilities_ArrowRain_CommentCompare::create()),
+							COMMENT(Strings::Menus_Hacking_Abilities_Abilities_ArrowRain_CommentEval::create()
+								->setStringReplacementVariables(Strings::Menus_Hacking_Lexicon_Assembly_RegisterEax::create())),
+							ConstantString::create("cmp eax, 1\n")
+						})
+						, // x64
+						ConcatString::create({
+							COMMENT(Strings::Menus_Hacking_Abilities_Abilities_ArrowRain_CommentCompare::create()),
+							COMMENT(Strings::Menus_Hacking_Abilities_Abilities_ArrowRain_CommentEval::create()
+								->setStringReplacementVariables(Strings::Menus_Hacking_Lexicon_Assembly_RegisterRax::create())),
+							ConstantString::create("cmp rax, 1\n")
+						})
+					),
+				},
+				true
+			)
+		},
+	};
+
+	std::vector<HackableCode*> hackables = CREATE_HACKABLES(ArrowRain::compareTeam, codeInfoMap);
+
+	for (HackableCode* next : hackables)
+	{
+		this->registerCode(next);
+	}
+}
+
+HackablePreview* ArrowRain::createDefaultPreview()
+{
+	return ArrowRainGenericPreview::create(this->arrowResource);
+}
+
+void ArrowRain::runArrowRain()
+{
+	std::vector<TimelineEvent*> timelineEvents = std::vector<TimelineEvent*>();
+
+	for (int index = 0; index < ArrowRain::TickCount; index++)
+	{
+		Sprite* icon = Sprite::create(UIResources::Menus_Icons_ArrowRain);
+
+		icon->setScale(0.5f);
+
+		timelineEvents.push_back(TimelineEvent::create(
+				this->caster,
+				icon,
+				ArrowRain::TimeBetweenTicks * float(index) + ArrowRain::StartDelay, [=]()
+			{
+				this->damageOtherTeam();
+			})
+		);
+	}
+
+	CombatEvents::TriggerRegisterTimelineEventGroup(CombatEvents::RegisterTimelineEventGroupArgs(
+		TimelineEventGroup::create(timelineEvents, nullptr, this->caster, [=]()
+		{
+			this->despawn();
+		})
+	));
+}
+
+void ArrowRain::updateAnimation(float dt)
+{
+	static const float VarianceX = 768.0f;
+	static const float FallDistance = -1280.0f;
+	static const float PixelsPerSecond = 768.0f;
+	static const float Duration = std::abs(FallDistance) / PixelsPerSecond;
+
+	float totalDuration = ArrowRain::StartDelay + ArrowRain::TimeBetweenTicks * float(ArrowRain::TickCount);
+
+	for (int index = 0; index < int(this->arrowCooldowns.size()); index++)
+	{
+		if (!this->timelinePaused)
+		{
+			this->arrowCooldowns[index] -= dt;
+			this->arrowPool[index]->setPositionY(this->arrowPool[index]->getPositionY() - dt * PixelsPerSecond);
+		}
+
+		if (this->arrowCooldowns[index] <= 0.0f)
+		{
+			this->arrowPool[index]->setOpacity(0);
+			this->arrowPool[index]->setPosition(Vec2(RandomHelper::random_real(-VarianceX, VarianceX), 0.0f));
+			this->arrowPool[index]->runAction(FadeTo::create(0.25f, 255));
+
+			this->arrowCooldowns[index] = Duration;
+		}
+	}
+}
+
+void ArrowRain::damageOtherTeam()
+{
+	CombatEvents::TriggerQueryTimeline(CombatEvents::QueryTimelineArgs([=](Timeline* timeline)
+	{
+		TimelineEntry* casterEntry = timeline->getAssociatedEntry(this->caster);
+		
+		if (casterEntry == nullptr)
+		{
+			return;
+		}
+
+		this->compareTeam(casterEntry);
+
+		for (TimelineEntry* next : timeline->getEntries())
+		{
+			if (next->isPlayerEntry() == CombatObject::HackStateStorage[ArrowRain::StateKeyIsCasterOnEnemyTeam].asBool())
+			{
+				CombatEvents::TriggerDamage(CombatEvents::DamageOrHealingArgs(this->caster, next->getEntity(), std::abs(ArrowRain::Damage), AbilityType::Passive, true));
+			}
+		}
+
+		static bool Alternate = false;
+
+		if (Alternate)
+		{
+			this->impactSfxA->play();
+		}
+		else
+		{
+			this->impactSfxB->play();
+		}
+
+		Alternate = !Alternate;
+	}));
+}
+
+NO_OPTIMIZE void ArrowRain::compareTeam(TimelineEntry* entry)
+{
+	static volatile int isOnEnemyTeamLocal;
+
+	isOnEnemyTeamLocal = entry->isPlayerEntry() ? 0 : 1;
+
+	ASM_PUSH_EFLAGS();
+	ASM(push ZAX);
+	ASM(push ZBX);
+
+	ASM(MOV ZAX, 0);
+	ASM_MOV_REG_VAR(eax, isOnEnemyTeamLocal);
+
+	ASM(mov ZBX, 1);
+
+	HACKABLE_CODE_BEGIN(LOCAL_FUNC_ID_COMPARE_TEAM);
+	ASM(cmp ZAX, 1);
+	ASM_NOP8();
+	HACKABLE_CODE_END();
+
+	// If the compare is true, set zax to 1, else 0
+	ASM(MOV ZAX, 0);
+	ASM(cmove ZAX, ZBX);
+
+	ASM_MOV_VAR_REG(isOnEnemyTeamLocal, eax);
+
+	ASM(pop ZBX);
+	ASM(pop ZAX);
+	ASM_POP_EFLAGS();
+
+	HACKABLES_STOP_SEARCH();
+
+	CombatObject::HackStateStorage[ArrowRain::StateKeyIsCasterOnEnemyTeam] = Value((isOnEnemyTeamLocal == 0) ? false : true);
+}
+END_NO_OPTIMIZE

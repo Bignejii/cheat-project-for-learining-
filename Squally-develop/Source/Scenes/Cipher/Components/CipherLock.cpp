@@ -1,0 +1,262 @@
+#include "CipherLock.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCClippingNode.h"
+#include "2d/CCDrawNode.h"
+#include "2d/CCSprite.h"
+#include "base/CCDirector.h"
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+
+#include "Engine/Input/ClickableNode.h"
+#include "Engine/Sound/Sound.h"
+#include "Scenes/Cipher/CipherConfig.h"
+#include "Scenes/Cipher/CipherState.h"
+
+#include "Resources/CipherResources.h"
+#include "Resources/SoundResources.h"
+
+using namespace cocos2d;
+
+const float CipherLock::PinSpacing = 48.0f;
+const float CipherLock::PinUnlockDistance = 104.0f;
+
+CipherLock* CipherLock::create()
+{
+	CipherLock* instance = new CipherLock();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+CipherLock::CipherLock()
+{
+	DrawNode* stencil = DrawNode::create();
+
+	stencil->drawSolidRect(Vec2(-224.0f, -224.0f), Vec2(224.0f, 224.0f), Color4F::GREEN);
+
+	this->contentClip = ClippingNode::create(stencil);
+	this->background = Sprite::create(CipherResources::Lock_Background);
+	this->steelGear = Sprite::create(CipherResources::Lock_GearSteel);
+	this->woodGearTop = Sprite::create(CipherResources::Lock_GearWood);
+	this->woodGearBottom = Sprite::create(CipherResources::Lock_GearWood);
+	this->shaft = Sprite::create(CipherResources::Lock_Shaft);
+	this->pinboardBack = Sprite::create(CipherResources::Lock_PinboardBack);
+	this->cipherPinsNode = Node::create();
+	this->stoppingBlock = Sprite::create(CipherResources::Lock_StoppingBlock);
+	this->pinboardFront = Sprite::create(CipherResources::Lock_PinboardFront);
+	this->gearTurnSound = Sound::create(SoundResources::Cipher_GearTurn);
+
+	// Enable to debug clipping:
+	// this->contentClip->addChild(stencil);
+
+	Texture2D::TexParams params = Texture2D::TexParams();
+	params.minFilter = GL_LINEAR;
+	params.magFilter = GL_LINEAR;
+	params.wrapT = GL_REPEAT;
+
+	this->shaft->getTexture()->setTexParameters(params);
+	this->shaft->setTextureRect(CRect(0.0f, 0.0f, this->shaft->getContentSize().width, this->shaft->getContentSize().height * 8.0f));
+
+	this->contentClip->addChild(this->background);
+	this->contentClip->addChild(this->steelGear);
+	this->contentClip->addChild(this->woodGearTop);
+	this->contentClip->addChild(this->woodGearBottom);
+	this->contentClip->addChild(this->shaft);
+	this->contentClip->addChild(this->pinboardBack);
+	this->contentClip->addChild(this->cipherPinsNode);
+	this->contentClip->addChild(this->stoppingBlock);
+	this->contentClip->addChild(this->pinboardFront);
+	this->addChild(this->contentClip);
+	this->addChild(this->gearTurnSound);
+}
+
+CipherLock::~CipherLock()
+{
+}
+
+void CipherLock::onEnter()
+{
+	super::onEnter();
+}
+
+void CipherLock::initializePositions()
+{
+	super::initializePositions();
+
+	CSize visibleSize = Director::getInstance()->getVisibleSize();
+
+	this->contentClip->setPosition(Vec2(visibleSize.width / 2.0f + CipherConfig::RightColumnCenter, visibleSize.height / 2.0f + CipherConfig::TopPanelCenter));
+	this->background->setPosition(Vec2(0.0f, 0.0f));
+	this->steelGear->setPosition(Vec2(0.0f + 64.0f, 0.0f));
+	this->woodGearTop->setPosition(Vec2(0.0f + 120.0f, 80.0f));
+	this->woodGearBottom->setPosition(Vec2(0.0f + 120.0f, -80.0f));
+	this->shaft->setPosition(Vec2(0.0f + 38.0f, 0.0f));
+	this->cipherPinsNode->setPosition(Vec2(0.0f + 38.0f, 56.0f));
+	this->pinboardBack->setPosition(Vec2(-66.0f, 0.0f));
+	this->stoppingBlock->setPosition(Vec2(-16.0f, 96.0f));
+	this->pinboardFront->setPosition(Vec2(-40.0f, 0.0f));
+
+	for (int index = 0; (index < int(this->cipherPins.size()) && index < int(this->cipherPinholes.size())); index++)
+	{
+		this->cipherPinholes[index]->setPosition(Vec2(0.0f, float(index) * -CipherLock::PinSpacing));
+		this->cipherPins[index]->setPosition(Vec2(-24.0f, float(index) * -CipherLock::PinSpacing));
+	}
+}
+
+void CipherLock::initializeListeners()
+{
+	super::initializeListeners();
+
+	this->addEventListener(EventListenerCustom::create(CipherEvents::EventTryUnlockCurrentCipher, ([=](EventCustom* eventCustom)
+	{
+		CipherEvents::UnlockArgs* args = static_cast<CipherEvents::UnlockArgs*>(eventCustom->getData());
+
+		if (args != nullptr)
+		{
+			this->hasAnyPinFailed |= !(args->success);
+			
+			if (args->cipherIndex < int(cipherPins.size()))
+			{
+				Sprite* pinhole = this->cipherPinholes[args->cipherIndex];
+				Sprite* pin = this->cipherPins[args->cipherIndex];
+
+				CallFunc* scrollFunc = CallFunc::create([=]()
+				{
+					// Normal scroll animation
+					if (!this->hasAnyPinFailed)
+					{
+						this->gearTurnSound->play();
+
+						this->woodGearTop->runAction(RotateBy::create(0.5f, 180.0f));
+						this->steelGear->runAction(RotateBy::create(0.5f, -180.0f));
+						this->woodGearBottom->runAction(RotateBy::create(0.5f, 180.0f));
+						
+						this->shaft->runAction(Sequence::create(
+							MoveBy::create(0.5f, Vec2(0.0f, CipherLock::PinSpacing)),
+							nullptr
+						));
+
+						this->cipherPinsNode->runAction(Sequence::create(
+							MoveBy::create(0.5f, Vec2(0.0f, CipherLock::PinSpacing)),
+							nullptr
+						));
+					}
+					// Failure stall animation
+					else
+					{
+						this->gearTurnSound->play();
+
+						this->woodGearTop->runAction(Sequence::create(
+							RotateBy::create(0.15f, 10.0f),
+							RotateBy::create(0.15f, -10.0f),
+							RotateBy::create(0.15f, 10.0f),
+							RotateBy::create(0.15f, -10.0f),
+							nullptr
+						));
+						this->steelGear->runAction(Sequence::create(
+							RotateBy::create(0.15f, 10.0f),
+							RotateBy::create(0.15f, -10.0f),
+							RotateBy::create(0.15f, 10.0f),
+							RotateBy::create(0.15f, -10.0f),
+							nullptr
+						));
+						this->woodGearBottom->runAction(Sequence::create(
+							RotateBy::create(0.15f, 10.0f),
+							RotateBy::create(0.15f, -10.0f),
+							RotateBy::create(0.15f, 10.0f),
+							RotateBy::create(0.15f, -10.0f),
+							nullptr
+						));
+						this->shaft->runAction(Sequence::create(
+							MoveBy::create(0.15f, Vec2(0.0f, 10.0f)),
+							MoveBy::create(0.15f, Vec2(0.0f, -10.0f)),
+							MoveBy::create(0.15f, Vec2(0.0f, 10.0f)),
+							MoveBy::create(0.15f, Vec2(0.0f, -10.0f)),
+							nullptr
+						));
+						cipherPinsNode->runAction(Sequence::create(
+							MoveBy::create(0.15f, Vec2(0.0f, 10.0f)),
+							MoveBy::create(0.15f, Vec2(0.0f, -10.0f)),
+							MoveBy::create(0.15f, Vec2(0.0f, 10.0f)),
+							MoveBy::create(0.15f, Vec2(0.0f, -10.0f)),
+							nullptr
+						));
+					}
+				});
+
+				if (args->success)
+				{
+					pin->runAction(Sequence::create(
+						MoveBy::create(0.5f, Vec2(-CipherLock::PinUnlockDistance, 0.0f)),
+						scrollFunc,
+						DelayTime::create(0.5f),
+						CallFunc::create(args->callback),
+						nullptr
+					));
+				}
+				else
+				{
+					pin->runAction(Sequence::create(
+						scrollFunc,
+						DelayTime::create(0.5f),
+						CallFunc::create(args->callback),
+						nullptr
+					));
+				}
+			}
+			else
+			{
+				if (args->callback != nullptr)
+				{
+					args->callback();
+				}
+			}
+		}
+	})));
+}
+
+void CipherLock::resetLock()
+{
+	this->initializePositions();
+}
+
+void CipherLock::onAnyStateChange(CipherState* cipherState)
+{
+	super::onAnyStateChange(cipherState);
+
+	switch(cipherState->stateType)
+	{
+		case CipherState::StateType::LoadInitialState:
+		{
+			this->cipherPinholes.clear();
+			this->cipherPins.clear();
+			this->cipherPinsNode->removeAllChildren();
+
+			for (auto next : cipherState->inputOutputMap)
+			{
+				Sprite* pinhole = Sprite::create(CipherResources::Lock_Pinhole);
+				Sprite* pin = Sprite::create(CipherResources::Lock_Pin);
+
+				this->cipherPinholes.push_back(pinhole);
+				this->cipherPins.push_back(pin);
+				this->cipherPinsNode->addChild(pinhole);
+				this->cipherPinsNode->addChild(pin);
+			}
+			
+			this->initializePositions();
+			break;
+		}
+		case CipherState::StateType::Neutral:
+		{
+			this->hasAnyPinFailed = false;
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+}

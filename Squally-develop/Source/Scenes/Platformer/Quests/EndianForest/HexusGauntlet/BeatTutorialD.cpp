@@ -1,0 +1,99 @@
+#include "BeatTutorialD.h"
+
+#include "2d/CCActionEase.h"
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+#include "base/CCValue.h"
+
+#include "Engine/Events/ObjectEvents.h"
+#include "Entities/Platformer/Squally/Squally.h"
+#include "Events/DialogueEvents.h"
+#include "Events/PlatformerEvents.h"
+#include "Objects/Platformer/Interactables/Doors/MagePortals/MagePortal.h"
+#include "Scenes/Platformer/Components/Entities/Friendly/Hexus/EndianForest/Gauntlet/TutorialDBehavior.h"
+#include "Scenes/Platformer/Objectives/ObjectiveKeys.h"
+#include "Scenes/Platformer/Objectives/Objectives.h"
+
+#include "Resources/HexusResources.h"
+#include "Resources/SoundResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string BeatTutorialD::MapKeyQuest = "beat-tutorial-D";
+const std::string BeatTutorialD::WinLossTrackIdentifier = "Tutorial-D";
+const std::string BeatTutorialD::QuestPortalTag = "quest-portal";
+
+BeatTutorialD* BeatTutorialD::create(GameObject* owner, QuestLine* questLine)
+{
+	BeatTutorialD* instance = new BeatTutorialD(owner, questLine);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+BeatTutorialD::BeatTutorialD(GameObject* owner, QuestLine* questLine) : super(owner, questLine, BeatTutorialD::MapKeyQuest, false)
+{
+	this->mage = dynamic_cast<PlatformerEntity*>(owner);
+}
+
+BeatTutorialD::~BeatTutorialD()
+{
+}
+
+void BeatTutorialD::onLoad(QuestState questState)
+{
+	this->defer([=]()
+	{
+		TutorialDBehavior* tutorialBehavior = TutorialDBehavior::create(this->mage);
+
+		tutorialBehavior->registerWinCallback([=]()
+		{
+			this->complete();
+		});
+		
+    	this->mage->attachComponent(tutorialBehavior);
+	});
+
+	ObjectEvents::WatchForObject<Squally>(this, [=](Squally* squally)
+	{
+		this->squally = squally;
+	}, Squally::MapKey);
+
+	ObjectEvents::WatchForObject<MagePortal>(this, [=](MagePortal* portal)
+	{
+		this->portal = portal;
+		
+		if (questState == QuestState::Complete)
+		{
+			this->portal->openPortal(true);
+		}
+		else
+		{
+			this->portal->closePortal(true);
+		}
+	}, BeatTutorialD::QuestPortalTag);
+}
+
+void BeatTutorialD::onActivate(bool isActiveThroughSkippable, bool isInitialActivation)
+{
+}
+
+void BeatTutorialD::onComplete()
+{
+	if (this->portal != nullptr)
+	{
+		this->portal->openPortal(true);
+	}
+
+	Objectives::SetCurrentObjective(ObjectiveKeys::EFBeatSarude);
+}
+
+void BeatTutorialD::onSkipped()
+{
+	this->removeAllListeners();
+}

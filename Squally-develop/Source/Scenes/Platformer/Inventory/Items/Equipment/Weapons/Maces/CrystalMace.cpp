@@ -1,0 +1,73 @@
+#include "CrystalMace.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Platformer/Inventory/Items/Recipes/Weapons/Maces/CrystalMacePlans.h"
+
+#include "Resources/ItemResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string CrystalMace::SaveKey = "crystal-mace";
+
+CrystalMace* CrystalMace::create()
+{
+	CrystalMace* instance = new CrystalMace();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+CrystalMace::CrystalMace() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 2 }}), MACE_DAMAGE_MIN(8), MACE_DAMAGE_MAX(8), ItemStats(
+	// Health
+	2,
+	// Mana
+	2,
+	// Attack
+	0,
+	// Magic Attack
+	0,
+	// Armor
+	0,
+	// Speed
+	0.05f
+))
+{
+}
+
+CrystalMace::~CrystalMace()
+{
+}
+
+Item* CrystalMace::clone()
+{
+	return CrystalMace::create();
+}
+
+LocalizedString* CrystalMace::getString()
+{
+	return Strings::Items_Equipment_Weapons_Maces_CrystalMace::create();
+}
+
+const std::string& CrystalMace::getIconResource()
+{
+	return ItemResources::Equipment_Weapons_Maces_CrystalMace;
+}
+
+const std::string& CrystalMace::getIdentifier()
+{
+	return CrystalMace::SaveKey;
+}
+
+Vec2 CrystalMace::getDisplayOffset()
+{
+	return Vec2(0.0f, -24.0f);
+}
+
+Recipe* CrystalMace::getRecipe()
+{
+	return CrystalMacePlans::create();
+}

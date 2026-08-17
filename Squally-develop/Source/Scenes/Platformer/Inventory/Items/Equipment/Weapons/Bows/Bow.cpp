@@ -1,0 +1,29 @@
+#include "Bow.h"
+
+#include "Resources/SoundResources.h"
+
+using namespace cocos2d;
+
+Bow::Bow(CurrencyInventory* cost, int minAttack, int maxAttack, ItemStats itemStats) : super(cost, minAttack, maxAttack, itemStats)
+{
+}
+
+Bow::~Bow()
+{
+}
+
+Vec2 Bow::getWeaponCollisionOffset()
+{
+	return Vec2(0.0f, 0.0f);
+}
+
+std::string Bow::getWeaponAttackSound()
+{
+	return SoundResources::Platformer_Physical_Projectiles_Woosh4;
+}
+
+std::string Bow::getWeaponImpactSound()
+{
+	return SoundResources::Platformer_Physical_Impact_HitSoft5;
+}
+

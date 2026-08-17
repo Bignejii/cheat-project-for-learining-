@@ -1,0 +1,45 @@
+#include "Ogre.h"
+
+#include "math/CCGeometry.h"
+
+#include "Scenes/Platformer/Inventory/Items/PlatformerItems.h"
+
+#include "Resources/EntityResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string Ogre::MapKey = "ogre";
+
+Ogre* Ogre::deserialize(ValueMap& properties)
+{
+	Ogre* instance = new Ogre(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+Ogre::Ogre(ValueMap& properties) : super(properties,
+	Ogre::MapKey,
+	EntityResources::Enemies_EndianForest_Ogre_Animations,
+	EntityResources::Enemies_EndianForest_Ogre_Emblem,
+	CSize(256.0f, 248.0f),
+	1.0f)
+{
+}
+
+Ogre::~Ogre()
+{
+}
+
+Vec2 Ogre::getDialogueOffset()
+{
+	return Vec2(0.0f, 0.0f);
+}
+
+LocalizedString* Ogre::getEntityName()
+{
+	return Strings::Platformer_Entities_Names_Enemies_EndianForest_Ogre::create();
+}

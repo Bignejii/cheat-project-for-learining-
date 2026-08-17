@@ -1,0 +1,52 @@
+#include "CagedHedgehog.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCSprite.h"
+
+#include "Scenes/Platformer/Save/SaveKeys.h"
+
+#include "Resources/ObjectResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string CagedHedgehog::MapKey = "caged-hedgehog";
+
+CagedHedgehog* CagedHedgehog::create(ValueMap& properties)
+{
+	CagedHedgehog* instance = new CagedHedgehog(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+CagedHedgehog::CagedHedgehog(ValueMap& properties) : super(properties, SaveKeys::SaveKeyCollectableAnimalHedgehog)
+{
+	this->animalSprite = Sprite::create(ObjectResources::Collectables_Animals_Hedgehog);
+
+	this->animalNode->addChild(this->animalSprite);
+}
+
+CagedHedgehog::~CagedHedgehog()
+{
+}
+
+void CagedHedgehog::initializePositions()
+{
+	super::initializePositions();
+
+	this->animalSprite->setPosition(Vec2(0.0f, -16.0f));
+}
+
+LocalizedString* CagedHedgehog::getAnimalName()
+{
+	return Strings::Menus_Collectables_Animals_Hedgehog::create();
+}
+
+std::string CagedHedgehog::getSpriteResource()
+{
+	return ObjectResources::Collectables_Animals_Hedgehog;
+}

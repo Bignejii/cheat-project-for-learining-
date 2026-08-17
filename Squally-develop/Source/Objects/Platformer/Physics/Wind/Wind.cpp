@@ -1,0 +1,242 @@
+#include "Wind.h"
+
+#include "2d/CCSprite.h"
+#include "base/CCValue.h"
+
+#include "Engine/Hackables/HackableCode.h"
+#include "Engine/Localization/ConcatString.h"
+#include "Engine/Localization/ConstantString.h"
+#include "Engine/Optimization/LazyNode.h"
+#include "Engine/Particles/SmartParticles.h"
+#include "Engine/Physics/CollisionObject.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Engine/Utils/MathUtils.h"
+#include "Objects/Platformer/Physics/Wind/WindGenericPreview.h"
+#include "Objects/Platformer/Physics/Wind/WindSetSpeedPreview.h"
+#include "Scenes/Platformer/Hackables/HackFlags.h"
+
+#include "Resources/ParticleResources.h"
+#include "Resources/UIResources.h"
+
+#include "Strings/Strings.h"
+#include "Scenes/Platformer/Level/Physics/PlatformerPhysicsTypes.h"
+
+using namespace cocos2d;
+
+#define LOCAL_FUNC_ID_WIND_SPEED 1
+
+const std::string Wind::MapKey = "wind";
+const std::string Wind::PropertyUniform = "uniform";
+const std::string Wind::PropertySpeedX = "speed-x";
+const std::string Wind::PropertySpeedY = "speed-y";
+const float Wind::BaseWindSpeed = 10240.0f;
+
+Wind* Wind::create(ValueMap& properties)
+{
+	Wind* instance = new Wind(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+Wind::Wind(ValueMap& properties) : super(properties)
+{
+	this->isUniform = GameUtils::getKeyOrDefault(this->properties, Wind::PropertyUniform, Value(false)).asBool();
+	float speedX = GameUtils::getKeyOrDefault(this->properties, Wind::PropertySpeedX, Value(0.0f)).asFloat();
+	float speedY = GameUtils::getKeyOrDefault(this->properties, Wind::PropertySpeedY, Value(0.0f)).asFloat();
+
+	this->windSize = CSize(this->properties.at(GameObject::MapKeyWidth).asFloat(), this->properties.at(GameObject::MapKeyHeight).asFloat());
+	this->windSpeedDefault = Vec2(speedX, speedY);
+	this->windSpeed = this->windSpeedDefault;
+	this->windParticles = SmartParticles::create(ParticleResources::Gust, SmartParticles::CullInfo(this->windSize));
+	this->windForce = CollisionObject::create(CollisionObject::createBox(this->windSize), (CollisionType)PlatformerCollisionType::Force, CollisionObject::Properties(false, false));
+
+	this->windParticles->setAnchorPoint(Vec2::ZERO);
+	this->windParticles->setGrouped();
+	
+	this->addChild(this->windForce);
+	this->addChild(this->windParticles);
+}
+
+Wind::~Wind()
+{
+}
+
+void Wind::onEnter()
+{
+	super::onEnter();
+
+	this->windParticles->start();
+	this->windParticles->setTotalParticles(int(this->windSize.width * this->windSize.height / 4096.0f));
+	this->windParticles->setPosVar(Vec2(this->windSize.width / 2.0f, this->windSize.height / 2.0f));
+
+	this->scheduleUpdate();
+}
+
+void Wind::initializePositions()
+{
+	super::initializePositions();
+}
+
+void Wind::initializeListeners()
+{
+	super::initializeListeners();
+
+	this->windForce->whileCollidesWith({ (int)PlatformerCollisionType::EntityMovement, (int)PlatformerCollisionType::Physics }, [=](CollisionData collisionData)
+	{
+		this->applyWindForce(collisionData.other, collisionData.dt);
+
+		return CollisionResult::DoNothing;
+	});
+}
+
+void Wind::update(float dt)
+{
+	super::update(dt);
+
+	this->updateWind(dt);
+}
+
+void Wind::applyWindForce(CollisionObject* target, float dt)
+{
+	Vec2 thisPosition = GameUtils::getWorldCoords(this);
+
+	Vec2 targetPosition = GameUtils::getWorldCoords(target);
+	Vec2 distance = Vec2(std::abs(thisPosition.x - targetPosition.x), std::abs(thisPosition.y - targetPosition.y));
+	Vec2 delta = Vec2(this->windSize / 2.0f) - distance;
+
+	// Note: default non-uniform values are to prevent bobbing in place between two wind objects
+	const float MinMultiplierX = this->isUniform ? 1.0f : 0.15f;
+	const float MinMultiplierY = this->isUniform ? 1.0f : 0.25f;
+
+	Vec2 multiplier = Vec2(MathUtils::clamp(delta.x / (this->windSize.width / 2.0f), MinMultiplierX, 1.0f), MathUtils::clamp(delta.y / (this->windSize.height / 2.0f) * 2.0f, MinMultiplierY, 1.0f));
+	Vec2 speed = Vec2(this->windSpeed.x * multiplier.x, this->windSpeed.y * multiplier.y) * Wind::BaseWindSpeed;
+
+	target->setVelocity(target->getVelocity() + speed * dt);
+}
+
+Vec2 Wind::getButtonOffset()
+{
+	return Vec2(0.0f, 0.0f);
+}
+
+void Wind::registerHackables()
+{
+	super::registerHackables();
+
+	HackableCode::CodeInfoMap codeInfoMap =
+	{
+		{
+			LOCAL_FUNC_ID_WIND_SPEED,
+			HackableCode::HackableCodeInfo(
+				Wind::MapKey,
+				Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_SetWindSpeed::create(),
+				HackableBase::HackBarColor::Purple,
+				UIResources::Menus_Icons_SpellWind,
+				LazyNode<HackablePreview>::create([](){ return (HackablePreview*)WindSetSpeedPreview::create(); }),
+				{
+					{
+						HackableCode::Register::zax, Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_RegisterEax::create(), HackableDataType::Float
+					},
+					{
+						HackableCode::Register::zbx, Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_RegisterEbx::create(), HackableDataType::Float
+					},
+				},
+				int(HackFlags::Wind),
+				12.0f,
+				0.0f,
+				{
+					HackableCode::ReadOnlyScript(
+						Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_SetWindSpeedDown::create(),
+						// x86
+						ConcatString::create({
+							COMMENT(Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_CommentWindDown::create()),
+							COMMENT(Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_CommentModify::create()),
+							ConstantString::create("mov dword ptr [eax], 0.0f\n"),
+							ConstantString::create("mov dword ptr [ebx], -1.0f\n")
+						})
+						, // x64
+						ConcatString::create({
+							COMMENT(Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_CommentWindDown::create()),
+							COMMENT(Strings::Menus_Hacking_Objects_Wind_SetWindSpeed_CommentModify::create()),
+							ConstantString::create("mov dword ptr [rax], 0.0f\n"),
+							ConstantString::create("mov dword ptr [rbx], -1.0f\n")
+						})
+					),
+				}
+			)
+		},
+	};
+
+	auto updateWindFunc = &Wind::updateWind;
+	std::vector<HackableCode*> hackables = HackableCode::create((void*&)updateWindFunc, codeInfoMap);
+
+	for (HackableCode* next : hackables)
+	{
+		this->registerCode(next);
+	}
+}
+
+HackablePreview* Wind::createDefaultPreview()
+{
+	return WindGenericPreview::create();
+}
+
+NO_OPTIMIZE void Wind::updateWind(float dt)
+{
+	this->windSpeed = Vec2::ZERO;
+
+	static volatile float* xSpeedPtr;
+	static volatile float* ySpeedPtr;
+	static volatile float* xDefaultSpeedPtr;
+	static volatile float* yDefaultSpeedPtr;
+
+	xSpeedPtr = &this->windSpeed.x;
+	ySpeedPtr = &this->windSpeed.y;
+	xDefaultSpeedPtr = &this->windSpeedDefault.x;
+	yDefaultSpeedPtr = &this->windSpeedDefault.y;
+
+	ASM(push ZAX);
+	ASM(push ZBX);
+
+	ASM_MOV_REG_PTR(ZAX, xDefaultSpeedPtr);
+	ASM_MOV_REG_PTR(ZBX, yDefaultSpeedPtr);
+
+	ASM(movss xmm0, [ZAX]);
+	ASM(movss xmm1, [ZBX]);
+
+	ASM_MOV_REG_PTR(ZAX, xSpeedPtr);
+	ASM_MOV_REG_PTR(ZBX, ySpeedPtr);
+
+	HACKABLE_CODE_BEGIN(LOCAL_FUNC_ID_WIND_SPEED);
+	ASM(movss [ZAX], xmm0);
+	ASM(movss [ZBX], xmm1);
+	ASM_NOP16();
+	ASM_NOP16();
+	HACKABLE_CODE_END();
+
+	ASM(pop ZBX);
+	ASM(pop ZAX);
+
+	HACKABLES_STOP_SEARCH();
+
+	if (this->windSpeed.x == 0.0f && this->windSpeed.y == 0.0f)
+	{
+		this->windParticles->stop(2.0f);
+	}
+	else
+	{
+		if (!this->windParticles->isActive())
+		{
+			this->windParticles->start();
+		}
+	}
+
+	static volatile float angle = 0.0f;
+
+	angle = std::atan2(this->windSpeed.y, this->windSpeed.x) * 180.0f / float(M_PI);
+
+	this->windParticles->setAngle(angle);
+}
+END_NO_OPTIMIZE

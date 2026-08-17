@@ -1,0 +1,68 @@
+#include "HolyNecklace.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Platformer/Inventory/Items/Recipes/Gear/Necklaces/HolyNecklaceRecipe.h"
+
+#include "Resources/ItemResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string HolyNecklace::SaveKey = "holy-necklace";
+
+HolyNecklace* HolyNecklace::create()
+{
+	HolyNecklace* instance = new HolyNecklace();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+HolyNecklace::HolyNecklace() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 15 }}), ItemStats(
+	// Health
+	6,
+	// Mana
+	2,
+	// Attack
+	0,
+	// Magic Attack
+	0,
+	// Armor
+	0,
+	// Speed
+	0.03f
+))
+{
+}
+
+HolyNecklace::~HolyNecklace()
+{
+}
+
+Item* HolyNecklace::clone()
+{
+	return HolyNecklace::create();
+}
+
+LocalizedString* HolyNecklace::getString()
+{
+	return Strings::Items_Equipment_Gear_Necklaces_HolyNecklace::create();
+}
+
+const std::string& HolyNecklace::getIconResource()
+{
+	return ItemResources::Equipment_Gear_Necklaces_T6_HolyNecklace;
+}
+
+const std::string& HolyNecklace::getIdentifier()
+{
+	return HolyNecklace::SaveKey;
+}
+
+Recipe* HolyNecklace::getRecipe()
+{
+	return HolyNecklaceRecipe::create();
+}

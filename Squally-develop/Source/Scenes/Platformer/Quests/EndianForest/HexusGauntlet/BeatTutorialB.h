@@ -1,0 +1,35 @@
+#pragma once
+
+#include "Engine/Quests/QuestTask.h"
+
+class MagePortal;
+class PlatformerEntity;
+class QuestLine;
+class Squally;
+
+class BeatTutorialB : public QuestTask
+{
+public:
+	static BeatTutorialB* create(GameObject* owner, QuestLine* questLine);
+
+	static const std::string MapKeyQuest;
+
+protected:
+	BeatTutorialB(GameObject* owner, QuestLine* questLine);
+	virtual ~BeatTutorialB();
+
+	void onLoad(QuestState questState) override;
+	void onActivate(bool isActiveThroughSkippable, bool isInitialActivation) override;
+	void onComplete() override;
+	void onSkipped() override;
+
+private:
+	typedef QuestTask super;
+	
+	MagePortal* portal = nullptr;
+	PlatformerEntity* mage = nullptr;
+	Squally* squally = nullptr;
+
+	static const std::string QuestPortalTag;
+	static const std::string WinLossTrackIdentifier;
+};

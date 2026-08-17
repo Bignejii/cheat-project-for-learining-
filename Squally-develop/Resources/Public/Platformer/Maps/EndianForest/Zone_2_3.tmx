@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="right-down" width="16" height="10" tilewidth="128" tileheight="128" infinite="0" nextlayerid="76" nextobjectid="840">
+ <objectgroup id="1" name="meta">
+  <properties>
+   <property name="background" value="Waterfall"/>
+   <property name="crack-color" value=""/>
+   <property name="gravity" value="-768"/>
+   <property name="map-banner" value=""/>
+   <property name="music" value="solace"/>
+   <property name="rubber-band" type="int" value="3"/>
+   <property name="show-cracks" type="bool" value="true"/>
+   <property name="type" value="meta"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="8" name="decor -2304">
+  <properties>
+   <property name="depth" type="float" value="-2304"/>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="9" name="decor -2048">
+  <properties>
+   <property name="depth" type="float" value="-2048"/>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="7" name="decor -1792">
+  <properties>
+   <property name="depth" type="float" value="-1792"/>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="14" name="decor -768">
+  <properties>
+   <property name="depth" type="float" value="-1024"/>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="73" name="pillar bg 2">
+  <properties>
+   <property name="depth" type="float" value="-320"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="827" name="Forest/Background/PillarBack2" type="decor" x="1095" y="239.742" width="740" height="733"/>
+ </objectgroup>
+ <objectgroup id="72" name="pillar bg 1">
+  <properties>
+   <property name="depth" type="float" value="-320"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="826" name="Forest/Background/PillarBack1" type="decor" x="212.318" y="240.061" width="740" height="733"/>
+ </objectgroup>
+ <objectgroup id="74" name="pillar arch">
+  <properties>
+   <property name="depth" type="float" value="-224"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="828" name="Forest/Background/WaterfallArch" type="decor" x="-263.667" y="-76.7424" width="2560" height="1268"/>
+ </objectgroup>
+ <objectgroup id="71" name="pillar 2">
+  <properties>
+   <property name="depth" type="float" value="-96"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="825" name="Forest/Background/Pillar2" type="decor" x="1449.83" y="-46.4848" width="342" height="1267"/>
+ </objectgroup>
+ <objectgroup id="70" name="pillar 1">
+  <properties>
+   <property name="depth" type="float" value="-64"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="824" name="Forest/Background/Pillar1" type="decor" x="182.909" y="-26.8485" width="331" height="1209"/>
+ </objectgroup>
+ <objectgroup id="75" name="waterfall" visible="0">
+  <properties>
+   <property name="depth" type="float" value="-32"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="829" name="Forest/Background/Waterfall" type="decor" x="45.8788" y="-31.6364" width="1967" height="1356"/>
+ </objectgroup>
+ <objectgroup id="60" name="sudo-terrain">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="823" name="Forest/Background/WaterfallFloor" type="decor" x="-108.364" y="843.03" width="2240" height="460">
+   <properties>
+    <property name="repeat-x" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="22" name="decor midground">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="23" name="objects">
+  <properties>
+   <property name="is-hackable" type="bool" value="true"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="834" name="solid" type="collision" x="-111.198" y="183.957" width="2270.88" height="171.48"/>
+  <object id="835" name="merlin" type="entity" x="1182.91" y="1061.94" width="128" height="128">
+   <properties>
+    <property name="components" value="friendly,face-squally"/>
+    <property name="quest" value="water-spellbook"/>
+    <property name="quest-line" value="water-spellbook"/>
+   </properties>
+  </object>
+  <object id="836" name="solid" type="collision" x="-102.303" y="1192.3" width="2265.39" height="168.242">
+   <properties>
+    <property name="mini-map-visible" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="838" name="help-totem-swim-hack" type="object" x="392.364" y="945.091" width="248" height="248"/>
+ </objectgroup>
+ <objectgroup id="24" name="entities">
+  <properties>
+   <property name="is-hackable" type="bool" value="true"/>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="25" name="player_layer">
+  <properties>
+   <property name="is-hackable" type="bool" value="true"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="523" name="squally" type="entity" x="903.292" y="1060.49" width="128" height="128">
+   <properties>
+    <property name="components" value="squally,is-swimming-clippy"/>
+   </properties>
+  </object>
+  <object id="839" name="spawn" type="object" x="963.576" y="601.394" width="128" height="128">
+   <properties>
+    <property name="transition" value="down"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="68" name="decor_foreground">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="830" name="Forest/Flower10" type="decor" x="130.452" y="1124.15" width="199" height="133"/>
+  <object id="831" name="Forest/Flower9" type="decor" x="1363.32" y="1116.42" width="199" height="133"/>
+  <object id="832" name="Forest/Flower11" type="decor" x="991.833" y="1131.5" width="92" height="116"/>
+  <object id="833" name="edge-portal" type="object" x="684.889" y="285.635" width="718.1" height="174.184">
+   <properties>
+    <property name="direction" value="up"/>
+    <property name="map" value="EndianForest/Zone_2_2"/>
+    <property name="transition" value="up"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="69" name="water">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="28" name="fireflies">
+  <properties>
+   <property name="type" value="weather"/>
+   <property name="weather" value="fireflies"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="31" name="rain">
+  <properties>
+   <property name="type" value="weather"/>
+   <property name="weather" value="rain"/>
+  </properties>
+ </objectgroup>
+</map>

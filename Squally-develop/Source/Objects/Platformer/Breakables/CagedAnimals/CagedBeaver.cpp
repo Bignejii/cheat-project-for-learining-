@@ -1,0 +1,52 @@
+#include "CagedBeaver.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCSprite.h"
+
+#include "Scenes/Platformer/Save/SaveKeys.h"
+
+#include "Resources/ObjectResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string CagedBeaver::MapKey = "caged-beaver";
+
+CagedBeaver* CagedBeaver::create(ValueMap& properties)
+{
+	CagedBeaver* instance = new CagedBeaver(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+CagedBeaver::CagedBeaver(ValueMap& properties) : super(properties, SaveKeys::SaveKeyCollectableAnimalBeaver)
+{
+	this->animalSprite = Sprite::create(ObjectResources::Collectables_Animals_Beaver);
+
+	this->animalNode->addChild(this->animalSprite);
+}
+
+CagedBeaver::~CagedBeaver()
+{
+}
+
+void CagedBeaver::initializePositions()
+{
+	super::initializePositions();
+
+	this->animalSprite->setPosition(Vec2(0.0f, -16.0f));
+}
+
+LocalizedString* CagedBeaver::getAnimalName()
+{
+	return Strings::Menus_Collectables_Animals_Beaver::create();
+}
+
+std::string CagedBeaver::getSpriteResource()
+{
+	return ObjectResources::Collectables_Animals_Beaver;
+}

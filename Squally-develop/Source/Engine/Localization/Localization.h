@@ -1,0 +1,29 @@
+#pragma once
+#include <string>
+
+#include "platform/CCCommon.h"
+
+class Localization
+{
+public:
+	static cocos2d::LanguageType getLanguage();
+	static void setLanguage(cocos2d::LanguageType languageType);
+	static std::string getLanguageCode();
+	static cocos2d::LanguageType getNativeLanguage();
+	static bool isCurrentLanguageLeftToRight();
+
+protected:
+	Localization();
+	virtual ~Localization();
+
+private:
+	friend class LocalizedLabel;
+	friend class LocalizedSprite;
+
+	static Localization* getInstance();
+
+	static cocos2d::LanguageType languageCodeToLanguageType(std::string languageCode);
+	static std::string languageTypeToLanguageCode(cocos2d::LanguageType languageType);
+
+	static Localization* Instance;
+};

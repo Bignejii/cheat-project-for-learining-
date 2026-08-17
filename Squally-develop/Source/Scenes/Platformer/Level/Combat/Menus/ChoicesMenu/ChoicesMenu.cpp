@@ -1,0 +1,389 @@
+#include "ChoicesMenu.h"
+
+#include "2d/CCSprite.h"
+#include "base/CCDirector.h"
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+
+#include "Engine/Input/ClickableTextNode.h"
+#include "Engine/Inventory/Inventory.h"
+#include "Engine/Inventory/Item.h"
+#include "Engine/Localization/LocalizedLabel.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Engine/Utils/MathUtils.h"
+#include "Entities/Platformer/PlatformerEntity.h"
+#include "Events/PlatformerEvents.h"
+#include "Scenes/Platformer/Components/Entities/Combat/EntityAttackBehavior.h"
+#include "Scenes/Platformer/Inventory/Items/Consumables/Consumable.h"
+#include "Scenes/Platformer/Level/Combat/Attacks/PlatformerAttack.h"
+#include "Scenes/Platformer/Level/Combat/Menus/ChoicesMenu/AttackMenu.h"
+#include "Scenes/Platformer/Level/Combat/Menus/ChoicesMenu/DefendMenu.h"
+#include "Scenes/Platformer/Level/Combat/Menus/ChoicesMenu/ItemsMenu.h"
+#include "Scenes/Platformer/Level/Combat/Menus/ChoicesMenu/RadialEntry.h"
+#include "Scenes/Platformer/Level/Combat/Menus/ChoicesMenu/RadialScrollMenu.h"
+#include "Scenes/Platformer/Level/Combat/Timeline.h"
+#include "Scenes/Platformer/Level/Combat/TimelineEntry.h"
+
+#include "Resources/UIResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const float ChoicesMenu::Radius = 240.0f;
+
+ChoicesMenu* ChoicesMenu::create(Timeline* timelineRef)
+{
+	ChoicesMenu* instance = new ChoicesMenu(timelineRef);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+ChoicesMenu::ChoicesMenu(Timeline* timelineRef)
+{
+	this->currentMenu = CombatEvents::MenuStateArgs::CurrentMenu::Closed;
+	this->previousMenu = CombatEvents::MenuStateArgs::CurrentMenu::Closed;
+	this->choicesMenu = RadialScrollMenu::create(ChoicesMenu::Radius);
+	this->attackMenu = AttackMenu::create(timelineRef);
+	this->defendMenu = DefendMenu::create(timelineRef);
+	this->itemsMenu = ItemsMenu::create();
+
+	this->itemsButton = this->choicesMenu->addEntry(Strings::Platformer_Combat_Items::create(), { }, UIResources::Menus_Icons_Dice, UIResources::Combat_ItemsCircle, [=]()
+	{
+		this->onItemsClick();
+	});
+
+	this->attackButton = this->choicesMenu->addEntry(Strings::Platformer_Combat_Attack::create(), { }, UIResources::Menus_Icons_SpearTip, UIResources::Combat_AttackCircle, [=]()
+	{
+		this->onAttackClick();
+	});
+
+	this->defendButton = this->choicesMenu->addEntry(Strings::Platformer_Combat_Defensives_Defend::create(), { }, UIResources::Menus_Icons_ShieldBroken, UIResources::Combat_DefendCircle, [=]()
+	{
+		this->onDefendClick();
+	});
+
+	this->addChild(this->choicesMenu);
+	this->addChild(this->attackMenu);
+	this->addChild(this->defendMenu);
+	this->addChild(this->itemsMenu);
+}
+
+ChoicesMenu::~ChoicesMenu()
+{
+}
+
+void ChoicesMenu::onEnter()
+{
+	super::onEnter();
+
+	this->setVisible(false);
+
+	this->scheduleUpdate();
+}
+
+void ChoicesMenu::initializePositions()
+{
+	super::initializePositions();
+}
+
+void ChoicesMenu::initializeListeners()
+{
+	super::initializeListeners();
+
+	this->addEventListenerIgnorePause(EventListenerCustom::create(CombatEvents::EventDisableDefend, [=](EventCustom* eventCustom)
+	{
+		this->noDefend = true;
+	}));
+
+	this->addEventListenerIgnorePause(EventListenerCustom::create(CombatEvents::EventDisableItems, [=](EventCustom* eventCustom)
+	{
+		this->noItems = true;
+	}));
+
+	// Handle the (very rare) case of getting interrupted while menuing -- can happen if a projectile hits the user after the timeline resumes.
+	this->addEventListenerIgnorePause(EventListenerCustom::create(CombatEvents::EventCastInterrupt, [=](EventCustom* eventCustom)
+	{
+		CombatEvents::CastInterruptArgs* args = static_cast<CombatEvents::CastInterruptArgs*>(eventCustom->getData());
+
+		PlatformerEntity* entity = this->selectedEntry == nullptr ? nullptr : this->selectedEntry->getEntity();
+
+		if (args != nullptr && args->target == entity)
+		{
+			if (this->currentMenu != CombatEvents::MenuStateArgs::CurrentMenu::Closed)
+			{
+				CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::Closed, this->selectedEntry));
+				CombatEvents::TriggerResumeTimeline();
+			}
+		}
+	}));
+
+	this->whenKeyPressed({ InputEvents::KeyCode::KEY_ESCAPE, InputEvents::KeyCode::KEY_BACKSPACE }, [=](InputEvents::KeyboardEventArgs* args)
+	{
+		switch (this->currentMenu)
+		{
+			case CombatEvents::MenuStateArgs::CurrentMenu::ChooseAttackTarget:
+			case CombatEvents::MenuStateArgs::CurrentMenu::ChooseBuffTarget:
+			case CombatEvents::MenuStateArgs::CurrentMenu::ChooseAnyTarget:
+			case CombatEvents::MenuStateArgs::CurrentMenu::ChooseResurrectionTarget:
+			{
+				args->handle();
+				CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(this->previousMenu, this->selectedEntry));	
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+	});
+
+	this->addEventListenerIgnorePause(EventListenerCustom::create(CombatEvents::EventMenuBack, [=](EventCustom* eventCustom)
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(this->previousMenu, this->selectedEntry));	
+	}));
+
+	this->addEventListenerIgnorePause(EventListenerCustom::create(CombatEvents::EventChangeMenuState, [=](EventCustom* eventCustom)
+	{
+		CombatEvents::MenuStateArgs* combatArgs = static_cast<CombatEvents::MenuStateArgs*>(eventCustom->getData());
+
+		if (combatArgs != nullptr)
+		{
+			this->previousMenu = this->currentMenu;
+			this->currentMenu = combatArgs->currentMenu;
+
+			this->track(combatArgs->entry == nullptr ? nullptr : combatArgs->entry->getEntity());
+
+			switch (this->currentMenu)
+			{
+				case CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect:
+				{
+					PlatformerEvents::TriggerAllowPause();
+
+					this->attackMenu->setVisible(false);
+					this->defendMenu->setVisible(false);
+					this->itemsMenu->setVisible(false);
+					this->choicesMenu->setVisible(true);
+					this->setVisible(true);
+
+					this->setSelectedEntry(combatArgs->entry);
+					this->choicesMenu->enableAll();
+
+					if (this->noItems || !this->itemsMenu->hasItems())
+					{
+						this->itemsButton->disableInteraction(127);
+					}
+					else
+					{
+						this->itemsButton->enableInteraction();
+					}
+
+					if (this->noDefend)
+					{
+						this->defendButton->disableInteraction(127);
+					}
+
+					if (this->previousMenu == CombatEvents::MenuStateArgs::CurrentMenu::Closed)
+					{
+						this->choicesMenu->scrollTo(1);
+					}
+
+					this->attackMenu->unfocus();
+					this->defendMenu->unfocus();
+					this->itemsMenu->unfocus();
+					this->choicesMenu->focus();
+
+					break;
+				}
+				case CombatEvents::MenuStateArgs::CurrentMenu::AttackSelect:
+				{
+					PlatformerEvents::TriggerDisallowPause();
+
+					this->attackMenu->setVisible(true);
+					this->defendMenu->setVisible(false);
+					this->itemsMenu->setVisible(false);
+					this->choicesMenu->setVisible(true);
+
+					this->choicesMenu->toggleAll(false, true);
+					this->attackMenu->enableAll();
+
+					this->attackMenu->focus();
+					this->defendMenu->unfocus();
+					this->itemsMenu->unfocus();
+					this->choicesMenu->unfocus();
+
+					break;
+				}
+				case CombatEvents::MenuStateArgs::CurrentMenu::ItemSelect:
+				{
+					PlatformerEvents::TriggerDisallowPause();
+
+					this->attackMenu->setVisible(false);
+					this->defendMenu->setVisible(false);
+					this->itemsMenu->setVisible(true);
+					this->choicesMenu->setVisible(true);
+
+					this->choicesMenu->toggleAll(false, true);
+					this->itemsMenu->enableAll();
+
+					this->attackMenu->unfocus();
+					this->defendMenu->unfocus();
+					this->itemsMenu->focus();
+					this->choicesMenu->unfocus();
+
+					break;
+				}
+				case CombatEvents::MenuStateArgs::CurrentMenu::DefendSelect:
+				{
+					PlatformerEvents::TriggerDisallowPause();
+
+					this->attackMenu->setVisible(false);
+					this->defendMenu->setVisible(true);
+					this->itemsMenu->setVisible(false);
+					this->choicesMenu->setVisible(true);
+
+					this->choicesMenu->toggleAll(false, true);
+					this->defendMenu->enableAll();
+
+					this->attackMenu->unfocus();
+					this->defendMenu->focus();
+					this->itemsMenu->unfocus();
+					this->choicesMenu->unfocus();
+					break;
+				}
+				case CombatEvents::MenuStateArgs::CurrentMenu::ChooseAttackTarget:
+				case CombatEvents::MenuStateArgs::CurrentMenu::ChooseBuffTarget:
+				case CombatEvents::MenuStateArgs::CurrentMenu::ChooseAnyTarget:
+				case CombatEvents::MenuStateArgs::CurrentMenu::ChooseResurrectionTarget:
+				{
+					PlatformerEvents::TriggerDisallowPause();
+
+					this->attackMenu->setVisible(false);
+					this->itemsMenu->setVisible(false);
+					this->choicesMenu->setVisible(false);
+
+					this->choicesMenu->unfocus();
+					this->itemsMenu->unfocus();
+					this->attackMenu->unfocus();
+					break;
+				}
+				default:
+				case CombatEvents::MenuStateArgs::CurrentMenu::Closed:
+				{
+					PlatformerEvents::TriggerAllowPause();
+
+					this->attackMenu->setVisible(false);
+					this->defendMenu->setVisible(false);
+					this->itemsMenu->setVisible(false);
+					this->choicesMenu->setVisible(false);
+					this->setVisible(false);
+
+					this->attackMenu->unfocus();
+					this->defendMenu->unfocus();
+					this->itemsMenu->unfocus();
+					this->choicesMenu->unfocus();
+
+					break;
+				}
+			}
+		}
+	}));
+
+	this->itemsMenu->setBackCallback([=]()
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect, this->selectedEntry));	
+	});
+
+	this->defendMenu->setBackCallback([=]()
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect, this->selectedEntry));	
+	});
+
+	this->attackMenu->setBackCallback([=]()
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect, this->selectedEntry));	
+	});
+}
+
+void ChoicesMenu::update(float dt)
+{
+	super::update(dt);
+
+	static const Vec2 Offset = Vec2(-64.0f, 0.0f);
+
+	if (this->trackTarget != nullptr)
+	{
+		this->setPosition(GameUtils::getScreenBounds(this->trackTarget).origin + this->trackTarget->getEntityCenterPoint() + Offset);
+	}
+}
+
+void ChoicesMenu::onItemsClick()
+{
+	this->itemsMenu->scrollTo(1);
+
+	if (this->currentMenu == CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect && this->choicesMenu->getIndex() == 0)
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::ItemSelect, this->selectedEntry));
+	}
+	else
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect, this->selectedEntry));
+	}
+
+	this->choicesMenu->scrollTo(0);
+}
+
+void ChoicesMenu::onAttackClick()
+{
+	this->attackMenu->scrollTo(1);
+
+	if (this->currentMenu == CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect && this->choicesMenu->getIndex() == 1)
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::AttackSelect, this->selectedEntry));
+	}
+	else
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect, this->selectedEntry));
+	}
+
+	this->choicesMenu->scrollTo(1);
+}
+
+void ChoicesMenu::onDefendClick()
+{
+	this->defendMenu->scrollTo(0);
+
+	if (this->currentMenu == CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect && this->choicesMenu->getIndex() == 2)
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::DefendSelect, this->selectedEntry));
+	}
+	else
+	{
+		CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::ActionSelect, this->selectedEntry));
+	}
+	
+	// CombatEvents::TriggerMenuStateChange(CombatEvents::MenuStateArgs(CombatEvents::MenuStateArgs::CurrentMenu::DefendSelect, this->selectedEntry));
+	
+	this->choicesMenu->scrollTo(2);
+}
+
+void ChoicesMenu::setSelectedEntry(TimelineEntry* selectedEntry)
+{
+	this->selectedEntry = selectedEntry;
+
+	this->attackMenu->buildAttackList(selectedEntry);
+	this->defendMenu->buildAttackList(selectedEntry);
+	this->itemsMenu->buildItemList(selectedEntry);
+
+	// Reset to default choices
+	this->attackMenu->scrollTo(1);
+	this->defendMenu->scrollTo(1);
+	this->itemsMenu->scrollTo(1);
+}
+
+void ChoicesMenu::track(PlatformerEntity* trackTarget)
+{
+	this->trackTarget = trackTarget;
+}

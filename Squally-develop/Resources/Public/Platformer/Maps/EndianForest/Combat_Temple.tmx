@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.8" tiledversion="1.8.4" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="128" tileheight="128" infinite="0" nextlayerid="37" nextobjectid="599">
+ <tileset firstgid="1" name="TileMap" tilewidth="128" tileheight="128" tilecount="60" columns="12">
+  <grid orientation="orthogonal" width="64" height="64"/>
+  <image source="../TileMap.png" width="1536" height="640"/>
+ </tileset>
+ <objectgroup id="1" name="meta">
+  <properties>
+   <property name="background" value="BrightSky"/>
+   <property name="music" value="perseverance"/>
+   <property name="show-cracks" type="bool" value="false"/>
+   <property name="type" value="meta"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="35" name="background">
+  <properties>
+   <property name="depth" type="float" value="-356"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="564" name="temple-dark" type="terrain" x="-781.031" y="-415.903">
+   <properties>
+    <property name="hole-tag" value="hole-A"/>
+    <property name="skip-surfaces" type="bool" value="true"/>
+   </properties>
+   <polygon points="140.589,64.0027 3977.72,60.4936 3981.18,3365.35 141.317,3367.84"/>
+  </object>
+ </objectgroup>
+ <objectgroup id="36" name="bg objects">
+  <properties>
+   <property name="depth" type="float" value="-356"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="582" name="torch" type="object" x="566.091" y="1294.64" width="42" height="130"/>
+  <object id="583" name="torch" type="object" x="1345.15" y="1283.7" width="42" height="130"/>
+  <object id="584" name="torch" type="object" x="2055.91" y="1304.55" width="42" height="130"/>
+  <object id="585" name="Ruins/WindowTransparent" type="decor" x="5.864" y="950.409" width="313" height="381"/>
+  <object id="586" name="Ruins/WindowTransparent" type="decor" x="837.803" y="948.773" width="313" height="381"/>
+  <object id="587" name="Ruins/WindowTransparent" type="decor" x="1554.17" y="944.167" width="313" height="381"/>
+  <object id="588" name="Ruins/WindowTransparent" type="decor" x="2261.08" y="952.167" width="313" height="381"/>
+  <object id="592" name="terrain-hole" type="object" x="77.6061" y="1024" width="170" height="260.333">
+   <properties>
+    <property name="hole-tag" value="hole-A"/>
+   </properties>
+  </object>
+  <object id="596" name="terrain-hole" type="object" x="909" y="1024" width="170" height="260.333">
+   <properties>
+    <property name="hole-tag" value="hole-A"/>
+   </properties>
+  </object>
+  <object id="597" name="terrain-hole" type="object" x="1625" y="1024" width="170" height="260.333">
+   <properties>
+    <property name="hole-tag" value="hole-A"/>
+   </properties>
+  </object>
+  <object id="598" name="terrain-hole" type="object" x="2333" y="1024" width="170" height="260.333">
+   <properties>
+    <property name="hole-tag" value="hole-A"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="21" name="all entities and terrain (same layer for z sorting)">
+  <properties>
+   <property name="is-hackable" type="bool" value="true"/>
+   <property name="type" value="objects"/>
+   <property name="z-sort" type="bool" value="true"/>
+  </properties>
+  <object id="554" name="combat-spawn" type="object" x="1768.67" y="1674.72" width="64" height="64">
+   <properties>
+    <property name="depth" type="float" value="-64"/>
+    <property name="spawn-order" type="int" value="1"/>
+    <property name="spawn-type" value="enemy"/>
+   </properties>
+  </object>
+  <object id="555" name="combat-spawn" type="object" x="520.4" y="1639.2" width="64" height="64">
+   <properties>
+    <property name="depth" type="float" value="-64"/>
+    <property name="spawn-order" type="int" value="0"/>
+    <property name="spawn-type" value="player"/>
+   </properties>
+  </object>
+  <object id="558" name="combat-spawn" type="object" x="749.86" y="1561.66" width="64" height="64">
+   <properties>
+    <property name="depth" type="float" value="-256"/>
+    <property name="spawn-order" type="int" value="1"/>
+    <property name="spawn-type" value="player"/>
+   </properties>
+  </object>
+  <object id="571" name="temple" type="terrain" x="323.167" y="1704" width="501.333" height="1050.67">
+   <properties>
+    <property name="depth" type="float" value="-64"/>
+   </properties>
+  </object>
+  <object id="572" name="temple" type="terrain" x="559.333" y="1625.66" width="501.333" height="1198.67">
+   <properties>
+    <property name="depth" type="float" value="-256"/>
+   </properties>
+  </object>
+  <object id="573" name="temple" type="terrain" x="1552.36" y="1738.3" width="501.333" height="1050.67">
+   <properties>
+    <property name="depth" type="float" value="-64"/>
+   </properties>
+  </object>
+  <object id="574" name="temple" type="terrain" x="1564.49" y="1552.18" width="501.333" height="1198.67">
+   <properties>
+    <property name="depth" type="float" value="-256"/>
+   </properties>
+  </object>
+  <object id="575" name="temple" type="terrain" x="1906.91" y="1646.12" width="501.333" height="1198.67">
+   <properties>
+    <property name="depth" type="float" value="-128"/>
+   </properties>
+  </object>
+  <object id="576" name="combat-spawn" type="object" x="1778" y="1488" width="64" height="64">
+   <properties>
+    <property name="depth" type="float" value="-256"/>
+    <property name="spawn-order" type="int" value="0"/>
+    <property name="spawn-type" value="enemy"/>
+   </properties>
+  </object>
+  <object id="577" name="combat-spawn" type="object" x="2123" y="1581" width="64" height="64">
+   <properties>
+    <property name="depth" type="float" value="-128"/>
+    <property name="spawn-order" type="int" value="2"/>
+    <property name="spawn-type" value="enemy"/>
+   </properties>
+  </object>
+  <object id="589" name="cinematic-marker" type="object" x="1220.73" y="1131.94" width="78.7879" height="88">
+   <properties>
+    <property name="tag" value="arena-center"/>
+   </properties>
+  </object>
+  <object id="590" name="cinematic-marker" type="object" x="1225.28" y="817.335" width="78.7879" height="88">
+   <properties>
+    <property name="tag" value="arena-top"/>
+   </properties>
+  </object>
+  <object id="591" name="cinematic-marker" type="object" x="1215.94" y="1602.66" width="78.7879" height="88">
+   <properties>
+    <property name="tag" value="arena-bottom"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="23" name="objects">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="565" name="camera-focus" type="object" x="1191.28" y="1220.51" width="128" height="128">
+   <properties>
+    <property name="zoom" type="float" value="1.25"/>
+   </properties>
+  </object>
+  <object id="566" name="camera-target" type="object" x="968.303" y="1320.39" width="128" height="128">
+   <properties>
+    <property name="tag" value="player-camera-1"/>
+    <property name="zoom" type="float" value="1.05"/>
+   </properties>
+  </object>
+  <object id="568" name="camera-target" type="object" x="759.697" y="1396.39" width="128" height="128">
+   <properties>
+    <property name="tag" value="player-camera-0"/>
+    <property name="zoom" type="float" value="1.125"/>
+   </properties>
+  </object>
+  <object id="578" name="camera-target" type="object" x="1473" y="1475" width="128" height="128">
+   <properties>
+    <property name="tag" value="enemy-camera-1"/>
+    <property name="zoom" type="float" value="1.05"/>
+   </properties>
+  </object>
+  <object id="579" name="camera-target" type="object" x="1471" y="1347" width="128" height="128">
+   <properties>
+    <property name="tag" value="enemy-camera-0"/>
+    <property name="zoom" type="float" value="1.15"/>
+   </properties>
+  </object>
+  <object id="580" name="camera-target" type="object" x="1585" y="1383" width="128" height="128">
+   <properties>
+    <property name="tag" value="enemy-camera-2"/>
+    <property name="zoom" type="float" value="1.1"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

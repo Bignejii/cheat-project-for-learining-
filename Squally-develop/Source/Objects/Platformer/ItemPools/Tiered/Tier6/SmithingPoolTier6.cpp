@@ -1,0 +1,50 @@
+#include "SmithingPoolTier6.h"
+
+#include "base/CCValue.h"
+
+#include "Engine/Inventory/ItemChance.h"
+#include "Scenes/Platformer/Inventory/Items/PlatformerItems.h"
+
+using namespace cocos2d;
+
+SmithingPoolTier6* SmithingPoolTier6::create(SampleMethod sampleMethod, int min, int max)
+{
+	SmithingPoolTier6* instance = new SmithingPoolTier6(sampleMethod, min, max);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+SmithingPoolTier6::SmithingPoolTier6(SampleMethod sampleMethod, int min, int max) : super(ValueMap(), "smithing-pool-t6", sampleMethod, min, max)
+{
+	/**************
+	 Misc
+	**************/
+	this->addItemToPool(ItemChance::create(Coal::create(), ItemChance::Probability::Reasonable));
+
+	// Phasing out
+	this->addItemToPool(ItemChance::create(DarkWood::create(), ItemChance::Probability::Uncommon));
+
+	/**************
+	 Metals
+	**************/
+	this->addItemToPool(ItemChance::create(Sulfur::create(), ItemChance::Probability::Uncommon));
+
+	// Phasing out
+	this->addItemToPool(ItemChance::create(Bone::create(), ItemChance::Probability::Rare));
+	this->addItemToPool(ItemChance::create(Mithril::create(), ItemChance::Probability::Epic));
+
+	/**************
+	 Gems
+	**************/
+	this->addItemToPool(ItemChance::create(Ruby::create(), ItemChance::Probability::Rare));
+
+	// Phasing out
+	this->addItemToPool(ItemChance::create(Diamond::create(), ItemChance::Probability::Legendary));
+	this->addItemToPool(ItemChance::create(Sapphire::create(), ItemChance::Probability::Artifact));
+}
+
+SmithingPoolTier6::~SmithingPoolTier6()
+{
+}

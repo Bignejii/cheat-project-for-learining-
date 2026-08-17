@@ -1,0 +1,89 @@
+#include "EntityMountBehavior.h"
+
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+#include "base/CCValue.h"
+
+#include "Engine/Utils/GameUtils.h"
+#include "Entities/Platformer/PlatformerEntity.h"
+#include "Objects/Platformer/Interactables/Mounts/MountBase.h"
+#include "Scenes/Platformer/Components/Entities/Movement/EntityMovementBehavior.h"
+#include "Scenes/Platformer/State/StateKeys.h"
+
+using namespace cocos2d;
+
+const std::string EntityMountBehavior::MapKey = "mount";
+
+EntityMountBehavior* EntityMountBehavior::create(GameObject* owner)
+{
+	EntityMountBehavior* instance = new EntityMountBehavior(owner);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+EntityMountBehavior::EntityMountBehavior(GameObject* owner) : super(owner)
+{
+	this->entity = dynamic_cast<PlatformerEntity*>(owner);
+
+	if (this->entity == nullptr)
+	{
+		this->invalidate();
+	}
+}
+
+EntityMountBehavior::~EntityMountBehavior()
+{
+}
+
+void EntityMountBehavior::onLoad()
+{
+}
+
+bool EntityMountBehavior::mount(MountBase* mountTarget)
+{
+	if (this->entity == nullptr || this->mountTarget != nullptr)
+	{
+		return false;
+	}
+
+	this->originalParent = this->entity->getParent();
+	this->mountTarget = mountTarget;
+
+	GameUtils::changeParent(this->entity, this->mountTarget->getReparentNode(), false);
+	
+	this->entity->setState(StateKeys::MountHijacked, Value(true));
+
+	return true;
+}
+
+MountBase* EntityMountBehavior::getMountTarget() const
+{
+	return this->mountTarget;
+}
+
+bool EntityMountBehavior::dismount()
+{
+	if (this->entity == nullptr || this->mountTarget == nullptr)
+	{
+		return false;
+	}
+
+	this->mountTarget = nullptr;
+
+	GameUtils::changeParent(this->entity, this->originalParent, true);
+	this->entity->setState(StateKeys::MountHijacked, Value(false));
+
+	return true;
+}
+
+bool EntityMountBehavior::isMounted() const
+{
+	return this->mountTarget != nullptr;
+}
+
+void EntityMountBehavior::onDisable()
+{
+	super::onDisable();
+}

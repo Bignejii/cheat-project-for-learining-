@@ -1,0 +1,44 @@
+#include "ReanimatedFighter.h"
+
+#include "math/CCGeometry.h"
+
+#include "Resources/EntityResources.h"
+#include "Resources/UIResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string ReanimatedFighter::MapKey = "reanimated-fighter";
+
+ReanimatedFighter* ReanimatedFighter::deserialize(ValueMap& properties)
+{
+	ReanimatedFighter* instance = new ReanimatedFighter(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+ReanimatedFighter::ReanimatedFighter(ValueMap& properties) : super(properties,
+	ReanimatedFighter::MapKey,
+	EntityResources::Enemies_CastleValgrind_ReanimatedFighter_Animations,
+	EntityResources::Enemies_CastleValgrind_ReanimatedFighter_Emblem,
+	CSize(256.0f, 248.0f),
+	0.9f)
+{
+}
+
+ReanimatedFighter::~ReanimatedFighter()
+{
+}
+
+Vec2 ReanimatedFighter::getDialogueOffset()
+{
+	return Vec2(0.0f, 0.0f);
+}
+
+LocalizedString* ReanimatedFighter::getEntityName()
+{
+	return Strings::Platformer_Entities_Names_Enemies_CastleValgrind_ReanimatedFighter::create();
+}

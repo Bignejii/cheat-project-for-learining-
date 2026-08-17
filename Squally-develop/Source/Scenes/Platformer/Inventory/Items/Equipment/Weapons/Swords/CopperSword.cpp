@@ -1,0 +1,78 @@
+#include "CopperSword.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Platformer/Inventory/Items/Recipes/Weapons/Swords/CopperSwordPlans.h"
+
+#include "Resources/ItemResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string CopperSword::SaveKey = "copper-sword";
+
+CopperSword* CopperSword::create()
+{
+	CopperSword* instance = new CopperSword();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+CopperSword::CopperSword() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 5 }}), SWORD_DAMAGE_MIN(2), SWORD_DAMAGE_MAX(2), ItemStats(
+	// Health
+	1,
+	// Mana
+	1,
+	// Attack
+	0,
+	// Magic Attack
+	0,
+	// Armor
+	0,
+	// Speed
+	0.15f
+))
+{
+}
+
+CopperSword::~CopperSword()
+{
+}
+
+Vec2 CopperSword::getWeaponCollisionOffset()
+{
+	return Vec2(0.0f, 86.0f);
+}
+
+Vec2 CopperSword::getDisplayOffset()
+{
+	return Vec2(0.0f, -2.0f);
+}
+
+Item* CopperSword::clone()
+{
+	return CopperSword::create();
+}
+
+LocalizedString* CopperSword::getString()
+{
+	return Strings::Items_Equipment_Weapons_Swords_CopperSword::create();
+}
+
+const std::string& CopperSword::getIconResource()
+{
+	return ItemResources::Equipment_Weapons_Swords_CopperSword;
+}
+
+const std::string& CopperSword::getIdentifier()
+{
+	return CopperSword::SaveKey;
+}
+
+Recipe* CopperSword::getRecipe()
+{
+	return CopperSwordPlans::create();
+}

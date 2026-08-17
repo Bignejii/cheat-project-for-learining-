@@ -1,0 +1,69 @@
+#include "SoulBand.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Platformer/Inventory/Items/Recipes/Gear/Rings/SoulBandRecipe.h"
+
+#include "Resources/ItemResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string SoulBand::SaveKey = "soul-band";
+
+SoulBand* SoulBand::create()
+{
+	SoulBand* instance = new SoulBand();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+// Tier 7
+SoulBand::SoulBand() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 85 }}), ItemStats(
+	// Health
+	7,
+	// Mana
+	9,
+	// Attack
+	0,
+	// Magic Attack
+	0,
+	// Armor
+	0,
+	// Speed
+	0.05f
+))
+{
+}
+
+SoulBand::~SoulBand()
+{
+}
+
+Item* SoulBand::clone()
+{
+	return SoulBand::create();
+}
+
+LocalizedString* SoulBand::getString()
+{
+	return Strings::Items_Equipment_Gear_Rings_SoulBand::create();
+}
+
+const std::string& SoulBand::getIconResource()
+{
+	return ItemResources::Equipment_Gear_Rings_T7_SoulBand;
+}
+
+const std::string& SoulBand::getIdentifier()
+{
+	return SoulBand::SaveKey;
+}
+
+Recipe* SoulBand::getRecipe()
+{
+	return SoulBandRecipe::create();
+}

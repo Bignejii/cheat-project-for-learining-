@@ -1,0 +1,66 @@
+#include "BreakableBarrel.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCActionEase.h"
+#include "2d/CCSprite.h"
+#include "base/CCValue.h"
+
+#include "Engine/Animations/SmartAnimationSequenceNode.h"
+#include "Engine/Physics/CollisionObject.h"
+#include "Engine/Sound/WorldSound.h"
+
+#include "Resources/FXResources.h"
+#include "Resources/ObjectResources.h"
+#include "Resources/SoundResources.h"
+
+using namespace cocos2d;
+
+const std::string BreakableBarrel::MapKey = "breakable-barrel";
+
+BreakableBarrel* BreakableBarrel::create(ValueMap& properties)
+{
+	BreakableBarrel* instance = new BreakableBarrel(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+BreakableBarrel::BreakableBarrel(ValueMap& properties) : super(properties, CSize(128.0f, 212.0f), 1)
+{
+	this->barrelSprite = Sprite::create(ObjectResources::Doors_Tent_BARREL);
+	this->explosion = SmartAnimationSequenceNode::create();
+
+	this->contentNode->addChild(this->barrelSprite);
+	this->contentNode->addChild(this->explosion);
+}
+
+BreakableBarrel::~BreakableBarrel()
+{
+}
+
+void BreakableBarrel::onEnter()
+{
+	super::onEnter();
+
+	this->scheduleUpdate();
+}
+
+void BreakableBarrel::initializePositions()
+{
+	super::initializePositions();
+}
+
+void BreakableBarrel::initializeListeners()
+{
+	super::initializeListeners();
+}
+
+void BreakableBarrel::onBreak()
+{
+	super::onBreak();
+	
+	this->explosion->playAnimation(FXResources::ExplosionNormal_Explosion_0000, 0.035f, true);
+	this->barrelSprite->setVisible(false);
+}

@@ -1,0 +1,55 @@
+#include "SpecialAdd.h"
+
+#include "Engine/Inventory/CurrencyInventory.h"
+#include "Scenes/Platformer/Inventory/Currencies/IOU.h"
+#include "Scenes/Hexus/CardData/CardKeys.h"
+
+#include "Resources/ItemResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string SpecialAdd::SaveKey = "special-add";
+
+SpecialAdd* SpecialAdd::create()
+{
+	SpecialAdd* instance = new SpecialAdd();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+SpecialAdd::SpecialAdd() : super(CurrencyInventory::create({{ IOU::getIOUIdentifier(), 13 }}), ItemMeta(3, 3))
+{
+}
+
+SpecialAdd::~SpecialAdd()
+{
+}
+
+Item* SpecialAdd::clone()
+{
+	return SpecialAdd::create();
+}
+
+LocalizedString* SpecialAdd::getString()
+{
+	return Strings::Hexus_Cards_Addition::create();
+}
+
+const std::string& SpecialAdd::getIconResource()
+{
+	return ItemResources::Collectables_Cards_CardSpecial;
+}
+
+const std::string& SpecialAdd::getIdentifier()
+{
+	return SpecialAdd::SaveKey;
+}
+
+std::string SpecialAdd::getCardKey()
+{
+	return CardKeys::Addition;
+}

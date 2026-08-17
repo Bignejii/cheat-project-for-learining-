@@ -1,0 +1,118 @@
+#include "ObjectLayerDeserializer.h"
+
+#include "base/CCValue.h"
+
+#include "Engine/Deserializers/Objects/ObjectDeserializer.h"
+#include "Engine/GlobalDirector.h"
+#include "Engine/Maps/MapLayer.h"
+#include "Engine/Maps/GameObject.h"
+#include "Engine/Utils/LogUtils.h"
+#include "Engine/Utils/GameUtils.h"
+
+using namespace cocos2d;
+
+const std::string ObjectLayerDeserializer::MapKeyObjectLayer = "objects";
+
+ObjectLayerDeserializer* ObjectLayerDeserializer::create(std::map<std::string, ObjectDeserializer*> objectDeserializers)
+{
+	ObjectLayerDeserializer* instance = new ObjectLayerDeserializer(objectDeserializers);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+ObjectLayerDeserializer::ObjectLayerDeserializer(std::map<std::string, ObjectDeserializer*> objectDeserializers) : super(ObjectLayerDeserializer::MapKeyObjectLayer)
+{
+	this->objectDeserializers = objectDeserializers;
+
+	for (auto next : this->objectDeserializers)
+	{
+		if (next.second != nullptr)
+		{
+			this->addChild(next.second);
+		}
+	}
+}
+
+ObjectLayerDeserializer::~ObjectLayerDeserializer()
+{
+}
+
+void ObjectLayerDeserializer::deserialize(LayerDeserializer::LayerDeserializationRequestArgs* args)
+{
+	std::vector<GameObject*> deserializedObjects = std::vector<GameObject*>();
+	std::string name = GameUtils::getKeyOrDefault(args->properties, GameObject::MapKeyName, Value("")).asString();
+	std::string type = GameUtils::getKeyOrDefault(args->properties, GameObject::MapKeyType, Value("")).asString();
+
+	// Callback to receive deserialized layers as they are parsed by their deserializers
+	auto onDeserializeCallback = [&](ObjectDeserializer::ObjectDeserializationArgs args)
+	{
+		deserializedObjects.push_back(args.gameObject);
+	};
+
+	// Fire deserialization events for objects
+	for (int index = 0; index < int(args->objects.size()); index++)
+	{
+		if (args->objects[index].getType() == cocos2d::Value::Type::MAP)
+		{
+			ValueMap object = args->objects[index].asValueMap();
+
+			// Append additional map metadata properties to object at load time to assist in deserialization
+			object[GameObject::MapKeyMetaIsIsometric] = args->isIsometric;
+			object[GameObject::MapKeyMetaMapWidth] = args->mapSize.width;
+			object[GameObject::MapKeyMetaMapHeight] = args->mapSize.height;
+			object[GameObject::MapKeyMetaMapIdentifier] = args->mapIdentifier;
+
+			if (!GameUtils::keyExists(object, GameObject::MapKeyType))
+			{
+				LogUtils::logError("Missing type on object");
+				continue;
+			}
+
+			if (!GameUtils::keyExists(object, GameObject::MapKeyName))
+			{
+				LogUtils::logError("Missing name on object");
+				continue;
+			}
+
+			if (!GameUtils::keyExists(object, GameObject::MapKeyWidth))
+			{
+				LogUtils::logError("Missing width on object");
+				continue;
+			}
+
+			if (!GameUtils::keyExists(object, GameObject::MapKeyHeight))
+			{
+				LogUtils::logError("Missing height on object");
+				continue;
+			}
+
+			if (!GameUtils::keyExists(object, GameObject::MapKeyXPosition))
+			{
+				LogUtils::logError("Missing x position on object");
+				continue;
+			}
+
+			if (!GameUtils::keyExists(object, GameObject::MapKeyYPosition))
+			{
+				LogUtils::logError("Missing y position on object");
+				continue;
+			}
+
+			std::string objectType = GameUtils::getKeyOrDefault(object, GameObject::MapKeyType, Value("")).asString();
+
+			ObjectDeserializer::ObjectDeserializationRequestArgs args = ObjectDeserializer::ObjectDeserializationRequestArgs(
+				object,
+				onDeserializeCallback
+			);
+
+			if (objectDeserializers.find(objectType) != objectDeserializers.end())
+			{
+				objectDeserializers[objectType]->deserialize(&args);
+			}
+		}
+	}
+
+	args->onDeserializeCallback(LayerDeserializer::LayerDeserializationArgs(MapLayer::create(args->properties, name, type, deserializedObjects), args->layerIndex));
+}

@@ -1,0 +1,29 @@
+#include "Sword.h"
+
+#include "Resources/SoundResources.h"
+
+using namespace cocos2d;
+
+Sword::Sword(CurrencyInventory* cost, int minAttack, int maxAttack, ItemStats itemStats) : super(cost, minAttack, maxAttack, itemStats)
+{
+}
+
+Sword::~Sword()
+{
+}
+
+Vec2 Sword::getWeaponCollisionOffset()
+{
+	return Vec2(0.0f, 98.0f);
+}
+
+std::string Sword::getWeaponAttackSound()
+{
+	return SoundResources::Platformer_Physical_Swings_SwingWeakBlade5;
+}
+
+std::string Sword::getWeaponImpactSound()
+{
+	return SoundResources::Platformer_Physical_Impact_HitSoft1;
+}
+

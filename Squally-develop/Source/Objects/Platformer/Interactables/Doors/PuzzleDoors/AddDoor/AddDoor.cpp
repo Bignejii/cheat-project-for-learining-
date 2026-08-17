@@ -1,0 +1,141 @@
+#include "AddDoor.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCActionEase.h"
+#include "2d/CCSprite.h"
+#include "base/CCValue.h"
+
+#include "Engine/Optimization/LazyNode.h"
+#include "Engine/Hackables/HackableCode.h"
+#include "Engine/Localization/ConcatString.h"
+#include "Engine/Localization/ConstantString.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Engine/Utils/MathUtils.h"
+#include "Objects/Platformer/Interactables/Doors/PuzzleDoors/AddDoor/AddDoorPreview.h"
+#include "Scenes/Platformer/Hackables/HackFlags.h"
+
+#include "Resources/ObjectResources.h"
+#include "Resources/ParticleResources.h"
+#include "Resources/UIResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+#define LOCAL_FUNC_ID_RUN_OPERATION 1
+
+const std::string AddDoor::MapKey = "add-door";
+
+AddDoor* AddDoor::create(ValueMap& properties)
+{
+	AddDoor* instance = new AddDoor(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+AddDoor::AddDoor(ValueMap& properties) : super(properties)
+{
+}
+
+AddDoor::~AddDoor()
+{
+}
+
+void AddDoor::onEnter()
+{
+	super::onEnter();
+
+	if (this->getIsUnlocked())
+	{
+		this->toggleHackable(false);
+	}
+}
+
+void AddDoor::registerHackables()
+{
+	super::registerHackables();
+
+	HackableCode::CodeInfoMap codeInfoMap =
+	{
+		{
+			LOCAL_FUNC_ID_RUN_OPERATION,
+			HackableCode::HackableCodeInfo(
+				AddDoor::MapKey,
+				Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_Addition::create(),
+				HackableBase::HackBarColor::Purple,
+				UIResources::Menus_Icons_Health,
+				LazyNode<HackablePreview>::create([=](){ return AddDoorPreview::create(); }),
+				{
+					{
+						HackableCode::Register::zcx, Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_RegisterEcx::create(), HackableDataType::Int32
+					},
+				},
+				int(HackFlags::None),
+				14.0f,
+				0.0f,
+				{
+					HackableCode::ReadOnlyScript(Strings::Menus_Hacking_CodeEditor_OriginalCode::create(),
+						// x86
+						ConcatString::create({
+							COMMENT(Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_CommentAdd::create()),
+							COMMENT(Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_CommentTopNumber::create()
+								->setStringReplacementVariables(Strings::Menus_Hacking_Lexicon_Assembly_RegisterEcx::create())),
+							COMMENT(Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_CommentElaboration::create()),
+							ConstantString::create("add ecx, 2")
+						})
+						, // x64
+						ConcatString::create({
+							COMMENT(Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_CommentAdd::create()),
+							COMMENT(Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_CommentTopNumber::create()
+								->setStringReplacementVariables(Strings::Menus_Hacking_Lexicon_Assembly_RegisterRcx::create())),
+							COMMENT(Strings::Menus_Hacking_Objects_PuzzleDoor_Addition_CommentElaboration::create()),
+							ConstantString::create("add rcx, 2")
+						})
+					),
+				},
+				true
+			)
+		},
+	};
+
+	auto incrementAnimationFunc = &AddDoor::AddDoorTransform;
+	std::vector<HackableCode*> hackables = HackableCode::create((void*&)incrementAnimationFunc, codeInfoMap);
+
+	for (HackableCode* next : hackables)
+	{
+		this->registerCode(next);
+	}
+}
+
+void AddDoor::runOperation(int puzzleIndex)
+{
+	this->setRealValue(puzzleIndex + 5);
+
+	this->AddDoorTransform(puzzleIndex);
+}
+
+NO_OPTIMIZE void AddDoor::AddDoorTransform(int puzzleIndex)
+{
+	static volatile int transform = 0;
+
+	transform = puzzleIndex;
+
+	ASM(push ZCX)
+	ASM_MOV_REG_VAR(ecx, transform);
+
+	HACKABLE_CODE_BEGIN(LOCAL_FUNC_ID_RUN_OPERATION);
+	ASM(add ZCX, 2)
+	ASM_NOP6();
+	HACKABLE_CODE_END();
+
+	ASM_MOV_VAR_REG(transform, ecx);
+	ASM(pop ZCX);
+
+	this->setHackValue(transform);
+
+	HACKABLES_STOP_SEARCH();
+}
+END_NO_OPTIMIZE

@@ -1,0 +1,64 @@
+#include "WoodenCrate.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCActionEase.h"
+#include "2d/CCSprite.h"
+#include "base/CCValue.h"
+
+#include "Engine/Localization/LocalizedString.h"
+#include "Engine/Hackables/HackableCode.h"
+#include "Engine/Physics/CollisionObject.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Engine/Utils/MathUtils.h"
+
+#include "Scenes/Platformer/Level/Physics/PlatformerPhysicsTypes.h"
+
+#include "Resources/ObjectResources.h"
+#include "Resources/UIResources.h"
+
+using namespace cocos2d;
+
+const std::string WoodenCrate::MapKey = "wooden-crate";
+
+WoodenCrate* WoodenCrate::create(ValueMap& properties)
+{
+	WoodenCrate* instance = new WoodenCrate(properties);
+	
+	instance->autorelease();
+
+	return instance;
+}
+
+WoodenCrate::WoodenCrate(ValueMap& properties) : super(properties)
+{
+	this->box = Sprite::create(ObjectResources::Physics_WoodenCrate_WoodenCrate);
+	this->boxCollision = CollisionObject::create(CollisionObject::createBox(CSize(160.0f, 154.0f)), (CollisionType)PlatformerCollisionType::Physics, CollisionObject::Properties(true, true));
+
+	this->boxCollision->addChild(this->box);
+	this->addChild(this->boxCollision);
+}
+
+WoodenCrate::~WoodenCrate()
+{
+}
+
+void WoodenCrate::initializeListeners()
+{
+	super::initializeListeners();
+
+	this->boxCollision->whileCollidesWith({ (int)PlatformerCollisionType::Physics, (int)PlatformerCollisionType::Solid, (int)PlatformerCollisionType::PassThrough, (int)PlatformerCollisionType::Player, (int)PlatformerCollisionType::Force }, [=](CollisionData collisionData)
+	{
+		return CollisionResult::CollideWithPhysics;
+	});
+}
+
+Vec2 WoodenCrate::getButtonOffset()
+{
+	return Vec2(0.0f, 0.0f);
+}
+
+void WoodenCrate::registerHackables()
+{
+	super::registerHackables();
+}

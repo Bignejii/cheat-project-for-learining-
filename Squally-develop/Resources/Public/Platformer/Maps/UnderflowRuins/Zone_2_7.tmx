@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.8" tiledversion="1.8.4" orientation="orthogonal" renderorder="right-down" width="34" height="9" tilewidth="128" tileheight="128" infinite="0" nextlayerid="125" nextobjectid="886">
+ <objectgroup id="1" name="meta">
+  <properties>
+   <property name="background" value="BlueSky"/>
+   <property name="crack-color" value=""/>
+   <property name="gravity" value="-768"/>
+   <property name="map-banner" value=""/>
+   <property name="music" value="artrium"/>
+   <property name="rubber-band" type="int" value="7"/>
+   <property name="show-cracks" type="bool" value="true"/>
+   <property name="type" value="meta"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="124" name="mountain clouds bg">
+  <properties>
+   <property name="depth" type="float" value="-14500"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="885" name="Forest/Background/MountainClouds3" type="decor" x="4888" y="-2002" width="6016" height="1956"/>
+ </objectgroup>
+ <objectgroup id="16" name="peaks far">
+  <properties>
+   <property name="depth" type="float" value="-14000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="868" name="Snow/Background/Mountain1" type="decor" x="6992" y="-872" width="8648" height="3828"/>
+ </objectgroup>
+ <objectgroup id="115" name="peaks">
+  <properties>
+   <property name="depth" type="float" value="-13000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="869" name="Snow/Background/Mountain2" type="decor" x="-2153" y="-3282" width="12576" height="6160"/>
+ </objectgroup>
+ <objectgroup id="119" name="mountain clouds mg">
+  <properties>
+   <property name="depth" type="float" value="-12500"/>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="123" name="mountain clouds fg">
+  <properties>
+   <property name="depth" type="float" value="-11500"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="883" name="Forest/Background/MountainClouds2" type="decor" x="7816" y="-1954" width="7680" height="1392">
+   <properties>
+    <property name="flip-x" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="884" name="Forest/Background/MountainClouds1" type="decor" x="944" y="-1770" width="4128" height="756">
+   <properties>
+    <property name="flip-x" type="bool" value="false"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="117" name="mountains bg">
+  <properties>
+   <property name="depth" type="float" value="-11000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="871" name="Forest/Background/Mountains1" type="decor" x="-32245.5" y="638.5" width="71968" height="6400">
+   <properties>
+    <property name="repeat-x" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="118" name="mountains fg">
+  <properties>
+   <property name="depth" type="float" value="-10000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="872" name="Forest/Background/Mountains2" type="decor" x="-32277.5" y="2366.5" width="71968" height="5120">
+   <properties>
+    <property name="repeat-x" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="120" name="trees bg">
+  <properties>
+   <property name="depth" type="float" value="-9000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="874" name="Forest/Background/Trees1" type="decor" x="-32101.5" y="3614.5" width="71968" height="3072">
+   <properties>
+    <property name="repeat-x" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="121" name="trees mg">
+  <properties>
+   <property name="depth" type="float" value="-8000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="875" name="Forest/Background/Trees2" type="decor" x="-32101.5" y="4126.5" width="71968" height="3440">
+   <properties>
+    <property name="repeat-x" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="122" name="trees fg">
+  <properties>
+   <property name="depth" type="float" value="-7000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="876" name="Forest/Background/Trees3" type="decor" x="-32085.5" y="4734.5" width="71968" height="3360">
+   <properties>
+    <property name="repeat-x" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="116" name="far-clouds">
+  <properties>
+   <property name="depth" type="float" value="-2000"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="870" name="Forest/Background/Clouds1" type="decor" x="-16085.5" y="-752" width="36832" height="3720">
+   <properties>
+    <property name="repeat-x" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="21" name="terrain">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="807" name="ruins-gray-thick" type="terrain" x="637.638" y="1065.94" width="3691.33" height="234.06"/>
+  <object id="856" name="ruins-gray-thick" type="terrain" x="3080.34" y="958.97" width="331.33" height="343.06"/>
+ </objectgroup>
+ <objectgroup id="114" name="decor">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="848" name="Ruins/Well" type="decor" x="3804.43" y="873.091" width="312" height="224"/>
+ </objectgroup>
+ <objectgroup id="23" name="objects">
+  <properties>
+   <property name="is-hackable" type="bool" value="true"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="813" name="edge-portal" type="object" x="-5.89839" y="979.15" width="640" height="200">
+   <properties>
+    <property name="direction" value="down"/>
+    <property name="map" value="UnderflowRuins/Zone_2_0"/>
+    <property name="transition" value="rope"/>
+   </properties>
+  </object>
+  <object id="821" name="portal" type="object" x="3834.5" y="811.931" width="256" height="256">
+   <properties>
+    <property name="map" value="UnderflowRuins/Zone_2_6"/>
+    <property name="transition" value="down"/>
+   </properties>
+  </object>
+  <object id="853" name="trigger" type="object" x="1186" y="-8" width="178" height="1072">
+   <properties>
+    <property name="send-event" value="talk-to-zeus"/>
+   </properties>
+  </object>
+  <object id="854" name="metal-chest" type="object" x="3181.72" y="830.122" width="128" height="128">
+   <properties>
+    <property name="reward-pool" value="ur-mirror"/>
+    <property name="send-event" value="ur-mirror"/>
+   </properties>
+  </object>
+  <object id="855" name="cinematic-marker" type="object" x="3182.28" y="738.545" width="128" height="128">
+   <properties>
+    <property name="listen-event" value="ur-mirror"/>
+    <property name="quest" value="obtain-mirror"/>
+    <property name="quest-line" value="cure-town"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="42" name="no hack objects">
+  <properties>
+   <property name="type" value="objects"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="24" name="entities">
+  <properties>
+   <property name="is-hackable" type="bool" value="true"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="851" name="angel" type="entity" x="2012.33" y="938" width="128" height="128">
+   <properties>
+    <property name="components" value="ur-t5-hexus,friendly,pick-pocket,pacing"/>
+    <property name="pocket-pool" value="ur-generic"/>
+    <property name="travel-distance" type="float" value="192"/>
+   </properties>
+  </object>
+  <object id="852" name="zeus" type="entity" x="866" y="932" width="128" height="128">
+   <properties>
+    <property name="components" value="friendly,pick-pocket"/>
+    <property name="pocket-pool" value="ur-generic"/>
+    <property name="quest" value="talk-to-zeus"/>
+    <property name="quest-line" value="cure-town"/>
+    <property name="travel-distance" type="float" value="192"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="25" name="player_layer">
+  <properties>
+   <property name="is-hackable" type="bool" value="true"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="523" name="squally" type="entity" x="3593.07" y="938.96" width="128" height="128">
+   <properties>
+    <property name="components" value="squally"/>
+   </properties>
+  </object>
+  <object id="816" name="spawn" type="object" x="3896.3" y="940.121" width="128" height="128">
+   <properties>
+    <property name="map-banner" value="skys-reach"/>
+    <property name="transition" value="up"/>
+   </properties>
+  </object>
+  <object id="849" name="spawn" type="object" x="768.788" y="936.909" width="128" height="128">
+   <properties>
+    <property name="map-banner" value="skys-reach"/>
+    <property name="transition" value="rope"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="22" name="decor +1">
+  <properties>
+   <property name="depth" type="float" value="64"/>
+   <property name="type" value="objects"/>
+  </properties>
+  <object id="823" name="Generic/Background/Cloud1" type="decor" x="2036.41" y="876.822" width="690" height="500">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="824" name="Generic/Background/Cloud2" type="decor" x="2559.97" y="1022.12" width="570" height="271">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="825" name="Generic/Background/Cloud3" type="decor" x="3047.97" y="1012.62" width="390" height="137">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="826" name="Generic/Background/Cloud4" type="decor" x="3337.97" y="991.621" width="614" height="122">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="827" name="Generic/Background/Cloud6" type="decor" x="1729.97" y="927.121" width="1539" height="251">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="828" name="Generic/Background/Cloud5" type="decor" x="3565.97" y="923.621" width="864" height="177">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="829" name="Generic/Background/Cloud7" type="decor" x="3415.47" y="886.621" width="1159" height="372">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="830" name="Generic/Background/Cloud8" type="decor" x="2459.47" y="880.121" width="761" height="387">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="831" name="Generic/Background/Cloud9" type="decor" x="3074.47" y="848.621" width="637" height="481">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="857" name="Generic/Background/Cloud4" type="decor" x="1093.5" y="958.5" width="614" height="122">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="858" name="Generic/Background/Cloud5" type="decor" x="1321.5" y="890.5" width="864" height="177">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="859" name="Generic/Background/Cloud7" type="decor" x="1171" y="853.5" width="1159" height="372">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+  <object id="860" name="Generic/Background/Cloud9" type="decor" x="830" y="815.5" width="637" height="481">
+   <properties>
+    <property name="components" value="z-fade"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

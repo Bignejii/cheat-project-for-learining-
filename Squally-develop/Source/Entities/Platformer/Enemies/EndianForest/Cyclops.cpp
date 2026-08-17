@@ -1,0 +1,43 @@
+#include "Cyclops.h"
+
+#include "math/CCGeometry.h"
+
+#include "Resources/EntityResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string Cyclops::MapKey = "cyclops";
+
+Cyclops* Cyclops::deserialize(ValueMap& properties)
+{
+	Cyclops* instance = new Cyclops(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+Cyclops::Cyclops(ValueMap& properties) : super(properties,
+	Cyclops::MapKey,
+	EntityResources::Enemies_EndianForest_Cyclops_Animations,
+	EntityResources::Enemies_EndianForest_Cyclops_Emblem,
+	CSize(296.0f, 256.0f),
+	1.0f)
+{
+}
+
+Cyclops::~Cyclops()
+{
+}
+
+Vec2 Cyclops::getDialogueOffset()
+{
+	return Vec2(0.0f, -64.0f);
+}
+
+LocalizedString* Cyclops::getEntityName()
+{
+	return Strings::Platformer_Entities_Names_Enemies_EndianForest_Cyclops::create();
+}

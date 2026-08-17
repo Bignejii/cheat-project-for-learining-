@@ -1,0 +1,150 @@
+#include "Portal.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "base/CCValue.h"
+
+#include "Engine/Events/NavigationEvents.h"
+#include "Engine/Input/ClickableNode.h"
+#include "Engine/Localization/ConstantString.h"
+#include "Engine/Physics/CollisionObject.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Engine/Utils/StrUtils.h"
+#include "Events/PlatformerEvents.h"
+#include "Menus/Interact/InteractMenu.h"
+#include "Scenes/Platformer/Level/PlatformerMap.h"
+#include "Scenes/Platformer/Level/Physics/PlatformerPhysicsTypes.h"
+
+#include "Resources/UIResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string Portal::MapKey = "portal";
+const std::string Portal::PropertyPortalTransition = "transition";
+const std::string Portal::PropertyPortalMap = "map";
+const std::string Portal::PropertyIsLocked = "is-locked";
+const std::string Portal::SaveKeyListenEventTriggered = "SAVE_KEY_LISTEN_EVENT_TRIGGERED";
+
+Portal* Portal::create(ValueMap& properties)
+{
+	float width = GameUtils::getKeyOrDefault(properties, GameObject::MapKeyWidth, Value(0.0f)).asFloat();
+	float height = GameUtils::getKeyOrDefault(properties, GameObject::MapKeyHeight, Value(0.0f)).asFloat();
+	Portal* instance = new Portal(properties, CSize(width, height));
+
+	instance->autorelease();
+
+	return instance;
+}
+
+Portal::Portal(ValueMap& properties, CSize size, Vec2 offset, Color3B color) : super(properties, InteractObject::InteractType::Input, size, offset, nullptr, InputEvents::KeyCode::KEY_V, color)
+{
+	this->mapFile = GameUtils::getKeyOrDefault(this->properties, Portal::PropertyPortalMap, Value("")).asString();
+	this->transition = GameUtils::getKeyOrDefault(this->properties, Portal::PropertyPortalTransition, Value("")).asString();
+	this->isLocked = GameUtils::getKeyOrDefault(this->properties, Portal::PropertyIsLocked, Value(this->isLocked)).asBool();
+
+	this->setName("Portal: " + this->mapFile);
+
+	if (this->mapFile.empty())
+	{
+		this->setInteractType(InteractType::None);
+	}
+}
+
+Portal::~Portal()
+{
+}
+
+void Portal::onEnter()
+{
+	super::onEnter();
+
+	if (!this->getListenEvent().empty())
+	{
+		if (!this->loadObjectStateOrDefault(Portal::SaveKeyListenEventTriggered, Value(false)).asBool())
+		{
+			this->lock(false);
+
+			this->listenForMapEvent(this->getListenEvent(), [=](ValueMap args)
+			{
+				this->saveObjectState(Portal::SaveKeyListenEventTriggered, Value(true));
+				this->unlock(true);
+			});
+		}
+		else
+		{
+			this->unlock(false);
+		}
+	}
+}
+
+void Portal::initializePositions()
+{
+	super::initializePositions();
+}
+
+void Portal::initializeListeners()
+{
+	super::initializeListeners();
+}
+
+void Portal::onInteract(PlatformerEntity* interactingEntity)
+{
+	super::onInteract(interactingEntity);
+
+	this->loadMap();
+}
+
+void Portal::setMapFile(std::string mapFile)
+{
+	this->mapFile = mapFile;
+}
+
+void Portal::setTransiton(std::string transition)
+{
+	this->transition = transition;
+}
+
+void Portal::loadMap()
+{
+	if (this->disabled || this->mapFile.empty() || this->wasTripped)
+	{
+		return;
+	}
+
+	this->wasTripped = true;
+	this->broadcastMapEvent(this->getSendEvent(), ValueMap());
+
+	// Load new map after a short delay -- changing scenes in the middle of a collision causes a crash
+	// (not sure why, changing to a combat map is fine)
+	this->runAction(Sequence::create(
+		DelayTime::create(0.1f),
+		CallFunc::create([=]()
+		{
+			NavigationEvents::LoadScene(NavigationEvents::LoadSceneArgs([=]()
+			{
+				PlatformerEvents::TriggerBeforePlatformerMapChange();
+				PlatformerMap* map = PlatformerMap::create(this->transition);
+
+				// Attempt to load the map file as a full relative path (rare edge case)
+				if (map->loadMap(this->mapFile, false))
+				{
+					return map;
+				}
+
+				std::string mapResource = "Public/Platformer/Maps/" + this->mapFile + ".tmx";
+				std::string mapResourceFallback = "Private/Platformer/Maps/" + this->mapFile + ".tmx";
+
+				// Attempt the public map first, try the private path if that fails
+				if (!map->loadMap(mapResource, false))
+				{
+					map->loadMap(mapResourceFallback, true);
+				}
+
+				return map;
+			}));
+		}),
+		nullptr
+	));
+}

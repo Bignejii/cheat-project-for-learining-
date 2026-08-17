@@ -1,0 +1,44 @@
+#include "EarthElemental.h"
+
+#include "math/CCGeometry.h"
+
+#include "Resources/EntityResources.h"
+#include "Resources/UIResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string EarthElemental::MapKey = "earth-elemental";
+
+EarthElemental* EarthElemental::deserialize(ValueMap& properties)
+{
+	EarthElemental* instance = new EarthElemental(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+EarthElemental::EarthElemental(ValueMap& properties) : super(properties,
+	EarthElemental::MapKey,
+	EntityResources::Enemies_DataMines_EarthElemental_Animations,
+	EntityResources::Enemies_DataMines_EarthElemental_Emblem,
+	CSize(256.0f, 228.0f),
+	1.0f)
+{
+}
+
+EarthElemental::~EarthElemental()
+{
+}
+
+Vec2 EarthElemental::getDialogueOffset()
+{
+	return Vec2(-32.0f, -224.0f);
+}
+
+LocalizedString* EarthElemental::getEntityName()
+{
+	return Strings::Platformer_Entities_Names_Enemies_DataMines_EarthElemental::create();
+}

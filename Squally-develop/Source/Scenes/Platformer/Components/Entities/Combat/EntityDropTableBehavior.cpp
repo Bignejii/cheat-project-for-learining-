@@ -1,0 +1,83 @@
+#include "EntityDropTableBehavior.h"
+
+#include "2d/CCActionEase.h"
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+#include "base/CCValue.h"
+
+#include "Engine/Inventory/DropPool.h"
+#include "Entities/Platformer/PlatformerEntity.h"
+#include "Objects/Platformer/ItemPools/DropPools/DropPoolDeserializer.h"
+#include "Scenes/Platformer/State/StateKeys.h"
+
+using namespace cocos2d;
+
+const std::string EntityDropTableBehavior::MapKey = "drop-table";
+
+EntityDropTableBehavior* EntityDropTableBehavior::create(GameObject* owner)
+{
+	EntityDropTableBehavior* instance = new EntityDropTableBehavior(owner);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+EntityDropTableBehavior::EntityDropTableBehavior(GameObject* owner) : super(owner)
+{
+	this->entity = dynamic_cast<PlatformerEntity*>(owner);
+	this->dropPoolDeserializer = DropPoolDeserializer::create();
+	this->dropPool = nullptr;
+
+	if (this->entity == nullptr)
+	{
+		this->invalidate();
+	}
+
+	this->addChild(this->dropPoolDeserializer);
+}
+
+EntityDropTableBehavior::~EntityDropTableBehavior()
+{
+}
+
+void EntityDropTableBehavior::onLoad()
+{
+}
+
+void EntityDropTableBehavior::onDisable()
+{
+	super::onDisable();
+}
+
+void EntityDropTableBehavior::setDropTable(std::string dropTable)
+{
+	if (this->dropPool != nullptr)
+	{
+		this->removeChild(this->dropPool);
+		this->dropPool = nullptr;
+	}
+
+	ValueMap valueMap = ValueMap();
+
+	valueMap[GameObject::MapKeyType] = DropPoolDeserializer::MapKeyTypeDropPool;
+	valueMap[GameObject::MapKeyName] = dropTable;
+
+	ObjectDeserializer::ObjectDeserializationRequestArgs deserializeArgs = ObjectDeserializer::ObjectDeserializationRequestArgs(valueMap, [=](ObjectDeserializer::ObjectDeserializationArgs args)
+	{
+		DropPool* dropPool = static_cast<DropPool*>(args.gameObject);
+
+		this->dropPool = dropPool;
+
+		this->addChild(this->dropPool);
+	});
+
+	this->dropPoolDeserializer->deserialize(&deserializeArgs);
+}
+
+DropPool* EntityDropTableBehavior::getDropPool()
+{
+	return this->dropPool;
+}

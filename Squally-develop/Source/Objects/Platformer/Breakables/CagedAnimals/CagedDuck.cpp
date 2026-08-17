@@ -1,0 +1,52 @@
+#include "CagedDuck.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCSprite.h"
+
+#include "Scenes/Platformer/Save/SaveKeys.h"
+
+#include "Resources/ObjectResources.h"
+
+#include "Strings/Strings.h"
+
+using namespace cocos2d;
+
+const std::string CagedDuck::MapKey = "caged-duck";
+
+CagedDuck* CagedDuck::create(ValueMap& properties)
+{
+	CagedDuck* instance = new CagedDuck(properties);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+CagedDuck::CagedDuck(ValueMap& properties) : super(properties, SaveKeys::SaveKeyCollectableAnimalDuck)
+{
+	this->animalSprite = Sprite::create(ObjectResources::Collectables_Animals_Duck);
+
+	this->animalNode->addChild(this->animalSprite);
+}
+
+CagedDuck::~CagedDuck()
+{
+}
+
+void CagedDuck::initializePositions()
+{
+	super::initializePositions();
+
+	this->animalSprite->setPosition(Vec2(0.0f, -16.0f));
+}
+
+LocalizedString* CagedDuck::getAnimalName()
+{
+	return Strings::Menus_Collectables_Animals_Duck::create();
+}
+
+std::string CagedDuck::getSpriteResource()
+{
+	return ObjectResources::Collectables_Animals_Duck;
+}

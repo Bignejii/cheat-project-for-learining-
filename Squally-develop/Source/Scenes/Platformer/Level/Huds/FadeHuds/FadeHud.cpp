@@ -1,0 +1,95 @@
+#include "FadeHud.h"
+
+#include "2d/CCActionEase.h"
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "2d/CCDrawNode.h"
+#include "2d/CCSprite.h"
+#include "base/CCDirector.h"
+
+#include "Engine/Optimization/LazyNode.h"
+#include "Scenes/Platformer/Level/Huds/FadeHuds/NormalFadeHud.h"
+#include "Scenes/Platformer/Level/Huds/FadeHuds/TriangleFadeHud.h"
+#include "Scenes/Platformer/Level/Huds/FadeHuds/TvFadeHud.h"
+
+using namespace cocos2d;
+
+const float FadeHud::AnimationTimeBudget = 0.75f;
+
+FadeHud* FadeHud::create()
+{
+	FadeHud* instance = new FadeHud();
+
+	instance->autorelease();
+
+	return instance;
+}
+
+FadeHud::FadeHud()
+{
+	this->normalFadeHud = LazyNode<NormalFadeHud>::create([](){ return NormalFadeHud::create(); });
+	this->triangleFadeHud = LazyNode<TriangleFadeHud>::create([](){ return TriangleFadeHud::create(); });
+	this->tvFadeHud = LazyNode<TvFadeHud>::create([](){ return TvFadeHud::create(); });
+	this->resetScreen = DrawNode::create();
+
+	CSize visibleSize = Director::getInstance()->getVisibleSize();
+	this->resetScreen->drawSolidRect(Vec2::ZERO, Vec2(visibleSize), Color4F::BLACK);
+	this->resetScreen->setOpacity(0);
+
+	this->addChild(this->resetScreen);
+	this->addChild(this->normalFadeHud);
+	this->addChild(this->tvFadeHud);
+	this->addChild(this->triangleFadeHud);
+}
+
+FadeHud::~FadeHud()
+{
+}
+
+void FadeHud::pause()
+{
+	// ignore
+}
+
+void FadeHud::runAnim(FadeHudType fadeHudType)
+{
+	switch(fadeHudType)
+	{
+		case FadeHudType::Normal:
+		{
+			this->normalFadeHud->lazyGet()->runAnim();
+			break;
+		}
+		case FadeHudType::Triangles:
+		{
+			this->triangleFadeHud->lazyGet()->runAnim();
+			break;
+		}
+		case FadeHudType::Tv:
+		{
+			this->tvFadeHud->lazyGet()->runAnim();
+			break;
+		}
+	}
+}
+
+void FadeHud::resetAnims()
+{
+	if (this->normalFadeHud->isBuilt())
+	{
+		this->normalFadeHud->lazyGet()->resetAnim();
+	}
+
+	if (this->triangleFadeHud->isBuilt())
+	{
+		this->triangleFadeHud->lazyGet()->resetAnim();
+	}
+
+	if (this->tvFadeHud->isBuilt())
+	{
+		this->tvFadeHud->lazyGet()->resetAnim();
+	}
+
+	this->resetScreen->setOpacity(255);
+	this->resetScreen->runAction(FadeTo::create(0.25f, 0));
+}

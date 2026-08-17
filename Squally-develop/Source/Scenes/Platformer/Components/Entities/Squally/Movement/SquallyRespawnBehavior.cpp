@@ -1,0 +1,184 @@
+#include "SquallyRespawnBehavior.h"
+
+#include "2d/CCActionInstant.h"
+#include "2d/CCActionInterval.h"
+#include "base/CCEventCustom.h"
+#include "base/CCEventListenerCustom.h"
+#include "base/CCValue.h"
+
+#include "Engine/Events/SaveEvents.h"
+#include "Engine/Events/SceneEvents.h"
+#include "Engine/Inventory/Inventory.h"
+#include "Engine/Save/SaveManager.h"
+#include "Engine/Utils/GameUtils.h"
+#include "Entities/Platformer/Squally/Squally.h"
+#include "Entities/Platformer/StatsTables/StatsTables.h"
+#include "Events/PlatformerEvents.h"
+#include "Objects/Platformer/Interactables/Mounts/MountBase.h"
+#include "Scenes/Platformer/Components/Entities/Helpers/HelperManagerBehavior.h"
+#include "Scenes/Platformer/Components/Entities/Inventory/EntityInventoryBehavior.h"
+#include "Scenes/Platformer/Components/Entities/Movement/EntityMountBehavior.h"
+#include "Scenes/Platformer/Components/Entities/Stats/EntityHealthBehavior.h"
+#include "Scenes/Platformer/Inventory/EquipmentInventory.h"
+#include "Scenes/Platformer/Inventory/Items/Equipment/Equipable.h"
+#include "Scenes/Platformer/Save/SaveKeys.h"
+#include "Scenes/Platformer/State/StateKeys.h"
+
+#include "Resources/UIResources.h"
+
+using namespace cocos2d;
+
+const std::string SquallyRespawnBehavior::MapKey = "squally-respawn";
+
+SquallyRespawnBehavior* SquallyRespawnBehavior::create(GameObject* owner)
+{
+	SquallyRespawnBehavior* instance = new SquallyRespawnBehavior(owner);
+
+	instance->autorelease();
+
+	return instance;
+}
+
+SquallyRespawnBehavior::SquallyRespawnBehavior(GameObject* owner) : super(owner)
+{
+	this->squally = dynamic_cast<Squally*>(owner);
+	this->isRespawning = false;
+
+	if (this->squally == nullptr)
+	{
+		this->invalidate();
+	}
+}
+
+SquallyRespawnBehavior::~SquallyRespawnBehavior()
+{
+}
+
+void SquallyRespawnBehavior::onLoad()
+{
+	this->addEventListenerIgnorePause(EventListenerCustom::create(SceneEvents::EventBeforeSceneChange, [=](EventCustom* eventCustom)
+	{
+		this->respawnLocked = true;
+	}));
+
+	if (this->squally != nullptr)
+	{
+		this->squally->listenForStateWrite(StateKeys::IsAlive, [=](Value value)
+		{
+			if (!this->isRespawning && !value.asBool())
+			{
+				fullMapReload = false;
+				this->respawn();
+			}
+		});
+	}
+
+	this->scheduleEvery([=]()
+	{
+		if (!this->isRespawning && !this->squally->getRuntimeStateOrDefaultBool(StateKeys::IsAlive, true))
+		{
+			fullMapReload = false;
+			this->respawn();
+		}
+	}, 1.0f / 15.0f);
+}
+
+void SquallyRespawnBehavior::onDisable()
+{
+	super::onDisable();
+}
+
+void SquallyRespawnBehavior::respawn(float duration)
+{
+	if (this->isRespawning || this->respawnLocked)
+	{
+		return;
+	}
+
+	this->isRespawning = true;
+
+	PlatformerEvents::TriggerBeforeLoadRespawn();
+	
+	if (duration <= 0.0f)
+	{
+		this->doRespawn();
+	}
+	else
+	{
+		this->runAction(Sequence::create(
+			DelayTime::create(duration),
+			CallFunc::create([=]()
+			{
+				this->doRespawn();
+			}),
+			nullptr
+		));
+	}
+
+	// Kill Squally during the map reload. Likely Squally is already dead though, unless this was called by another source.
+	this->squally->getComponent<EntityHealthBehavior>([=](EntityHealthBehavior* healthBehavior)
+	{
+		healthBehavior->kill();
+	});
+}
+
+void SquallyRespawnBehavior::respawnWithMapReload(float delay)
+{
+	fullMapReload = true;
+	this->respawn(1.5f);
+
+	// Kill Squally during the map reload.
+	this->squally->getComponent<EntityHealthBehavior>([=](EntityHealthBehavior* healthBehavior)
+	{
+		healthBehavior->kill();
+	});
+}
+
+void SquallyRespawnBehavior::doRespawn()
+{
+	if (this->respawnLocked)
+	{
+		return;
+	}
+	
+	this->squally->getComponent<EntityMountBehavior>([=](EntityMountBehavior* mountBehavior)
+	{
+		MountBase* mount = mountBehavior->getMountTarget();
+		
+		if (mount)
+		{
+			mount->dismountAll();
+		}
+	});
+
+	this->squally->getComponent<EntityHealthBehavior>([=](EntityHealthBehavior* healthBehavior)
+	{
+		healthBehavior->revive();
+	});
+
+	this->squally->getComponent<HelperManagerBehavior>([=](HelperManagerBehavior* helperManagerBehavior)
+	{
+		PlatformerEntity* helper = helperManagerBehavior->getHelperRef();
+
+		if (helper != nullptr)
+		{
+			helper->getComponent<EntityHealthBehavior>([=](EntityHealthBehavior* healthBehavior)
+			{
+				healthBehavior->revive();
+			});
+		}
+	});
+
+	if (this->fullMapReload)
+	{
+		PlatformerEvents::TriggerUnstuck();
+	}
+	else
+	{
+		PlatformerEvents::TriggerLoadRespawn();
+	}
+
+	this->isRespawning = false;
+	this->fullMapReload = false;
+}
+
